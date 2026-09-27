@@ -4,9 +4,9 @@
 
 ### Objective
 
-Establish an IPsec site-to-site VPN tunnel between the AWS FortiGate (`Redwood-AWS-FGT` from Lab 2) and an on-premises FortiGate, so that the AWS `Private-Subnet` (`10.100.2.0/24`) and the on-prem network (`192.168.0.0/22`) can communicate privately and securely over the Internet — without an AWS Site-to-Site VPN Gateway, Direct Connect, or Transit Gateway.
+Establish an IPsec site-to-site VPN tunnel between the AWS FortiGate (`redwood-aws101-lab-fgt` from Lab 2) and an on-premises FortiGate, so that the AWS `redwood-aws101-lab-subnet-private-1a` (`10.100.2.0/24`) and the on-prem network (`192.168.0.0/22`) can communicate privately and securely over the Internet — without an AWS Site-to-Site VPN Gateway, Direct Connect, or Transit Gateway.
 
-By the end of this lab, the test workload from Lab 3 (`Redwood-AWS-TestVM` at `10.100.2.10`) will reach an on-prem host directly by its `192.168.x.x` address, and an on-prem host will reach the AWS test VM the same way — all encrypted in transit, all inspected by FortiGate at both ends.
+By the end of this lab, the test workload from Lab 3 (`redwood-aws101-lab-testvm` at `10.100.2.10`) will reach an on-prem host directly by its `192.168.x.x` address, and an on-prem host will reach the AWS test VM the same way — all encrypted in transit, all inspected by FortiGate at both ends.
 
 ### What You'll Build
 
@@ -14,7 +14,7 @@ By the end of this lab, the test workload from Lab 3 (`Redwood-AWS-TestVM` at `1
 - An **IPsec VPN tunnel** named `to_aws` on the on-premises FortiGate
 - An **IPsec VPN tunnel** named `to_on_prem` on the AWS FortiGate, with matching parameters
 - Auto-generated firewall policies and routes on both FortiGates allowing bidirectional traffic across the tunnel
-- Validated **bidirectional connectivity** between AWS `Private-Subnet` and on-prem `192.168.0.0/22`
+- Validated **bidirectional connectivity** between AWS `redwood-aws101-lab-subnet-private-1a` and on-prem `192.168.0.0/22`
 
 ### Architecture After Lab 4
 
@@ -26,18 +26,20 @@ Redwood Industries' AWS landing zone is now ready for production workloads, but 
 
 A FortiGate-to-FortiGate IPsec VPN is the cheapest way to achieve this: no AWS VPN Gateway hourly charge, no Transit Gateway attachment fee, the same policies and visibility used everywhere else, and operational consistency for the network team. In this lab you build that tunnel, validate it end-to-end, and complete the AWS-101 workshop with a working hybrid topology.
 
+> **Well-Architected – Cost Optimization:** A FortiGate-to-FortiGate tunnel avoids the hourly charge of a managed Site-to-Site VPN connection, but you still pay for the FortiGate EC2 instance and for data transferred out of AWS over the tunnel.
+
 ---
 
 ## Prerequisites
 
 - Labs 1, 2, and 3 completed (VPC, both subnets, IGW, Public RT, FortiGate VM with FortiFlex licence, Private RT pointing at `port2`, test VM running, inbound VIPs, outbound NAT policy)
-- The AWS FortiGate Elastic IP (`Redwood-AWS-FGT-EIP` — recorded in Lab 2 Step 4)
+- The AWS FortiGate Elastic IP (`redwood-aws101-lab-fgt-eip` — recorded in Lab 2 Step 4)
 - The on-premises FortiGate's **public IP** and **admin credentials** (provided by your instructor or already known if it is your own lab gateway)
 - The on-premises FortiGate's `port2` private IP and the on-prem internal network CIDR (`192.168.0.0/22` for this workshop)
 - A pre-shared key (PSK) shared with the instructor — this lab uses `RedwoodIndustries2026!`
 
 > [!IMPORTANT]
-> **NAT Traversal (NAT-T) is mandatory on the AWS side.** The AWS FortiGate's `port1` interface holds a private VPC address (`10.100.1.x`). The Elastic IP exists at the Internet Gateway and is applied via 1:1 NAT downstream of FortiGate. Without NAT-T, IKE will detect the NAT mid-path and ESP traffic will be silently dropped. NAT-T encapsulates ESP in UDP/4500, which traverses the IGW correctly.
+> **NAT Traversal (NAT-T) is mandatory on the AWS side.** The AWS FortiGate's `port1` interface holds a private VPC address (`10.100.1.x`). The Elastic IP exists at the Internet Gateway and is applied via 1:1 NAT downstream of FortiGate. IKE detects this NAT during Phase 1, and both peers must then carry ESP inside UDP/4500. NAT-T is also the only IPsec transport this lab's security group permits (UDP/500 and UDP/4500, Step 1).
 
 <details>
 
@@ -53,11 +55,11 @@ IPsec in transport/tunnel mode uses **ESP (Encapsulating Security Payload)** —
 
 This creates a fundamental conflict with NAT:
 
-- NAT devices work by rewriting **IP addresses and port numbers** in packet headers
-- ESP has **no port numbers** — so a NAT device can't build a translation table entry for it
-- Worse, ESP **cryptographically signs the payload** — if a NAT device rewrites the source IP in the outer IP header, the IKE integrity check on the other end detects the modification and **drops the packet**
+- NAT devices that share one public address among many hosts (port address translation) rely on **port numbers** to track flows
+- ESP has **no port numbers** — so such a NAT device can't build a translation table entry for it, and cannot tell two ESP flows apart
+- IKE also authenticates the peers' identities and addresses, so an address change in the path must be detected and accounted for rather than silently ignored
 
-So a standard NAT device in the path between two IPsec peers will either silently drop ESP packets or corrupt them.
+So a NAT device in the path between two IPsec peers can drop or mis-deliver plain ESP packets.
 
 ---
 
@@ -72,7 +74,7 @@ Peer B receives it and computes: hash(source_IP_it_sees, source_port_it_sees)
 If they don't match → NAT is detected in the path
 ```
 
-In the AWS lab, the on-prem FortiGate sends IKE from its public IP. The AWS FortiGate receives it at `port1` (`10.100.1.x`) — but the outer IP header shows the on-prem public IP as source. On the AWS side, `port1` holds `10.100.1.x` while the Elastic IP is at the IGW. So when the on-prem peer hashes what it thinks the AWS peer's address is (the EIP) vs. what the IKE packet actually arrives with (`10.100.1.x`), the hashes don't match — **NAT detected**.
+In this lab, the on-prem FortiGate sends IKE to the AWS FortiGate's Elastic IP. The IGW translates the destination to `port1`'s private address (`10.100.1.x`). The AWS FortiGate hashes its own local address (`10.100.1.x`), while the on-prem peer hashed the address it sent to (the EIP). The hashes don't match — **NAT detected**, and both peers switch to NAT-T.
 
 ---
 
@@ -107,11 +109,11 @@ The IGW performs 1:1 NAT between the EIP and `port1`'s private IP. From the on-p
 
 Without NAT-T:
 
-- IKE Phase 1 might complete (IKE uses UDP/500, which NAT can handle)
-- But Phase 2 would try to switch to ESP (protocol 50)
-- The IGW can't translate ESP — it has no port numbers to track
-- ESP packets are dropped silently at the IGW
-- The tunnel appears to come up (Phase 1 green) but **passes zero traffic**
+- IKE still detects the NAT, but the peers cannot agree to encapsulate ESP in UDP
+- The tunnel would depend on raw ESP (IP protocol 50), which this lab's security group does not allow
+- Phase 1 may come up while the tunnel **passes zero traffic** — a confusing failure mode
+
+<!-- TODO: verify FortiOS behaviour when NAT is detected and NAT-T is disabled on one peer -->
 
 With NAT-T:
 
@@ -125,11 +127,11 @@ With NAT-T:
 
 ### The Keepalive Dimension
 
-NAT devices maintain translation table entries based on traffic activity. If a UDP/4500 flow goes idle (no packets for ~30 seconds on many NAT devices), the entry is purged. The next ESP packet arrives at the NAT device with no translation entry and gets dropped — causing the tunnel to appear to drop randomly under low-traffic conditions.
+Stateful devices in the path (including on-premises NAT routers and firewalls) expire idle UDP flows. If a UDP/4500 flow goes idle long enough, its state entry is purged and the next packet from the far side may be dropped — causing the tunnel to appear to drop randomly under low-traffic conditions.
 
-NAT-T solves this with **DPD (Dead Peer Detection) keepalives** — small UDP/4500 packets sent periodically (every 10 seconds in the lab) to keep the NAT translation entry alive, even when no user traffic is flowing.
+NAT-T addresses this with **NAT-T keepalives** — tiny UDP/4500 packets sent periodically to keep that state alive, even when no user traffic is flowing. This is the wizard's **Keepalive frequency** setting, which the lab sets to `10` seconds (a conservative value).
 
-This is why the lab explicitly sets `Keepalive frequency: 10` seconds. AWS's IGW NAT table timeout is not publicly documented but is known to be short — 10 seconds is conservative and safe.
+**Dead Peer Detection (DPD)** is a separate IKE mechanism: it checks whether the remote peer is still alive and tears down stale SAs so the tunnel can be re-established.
 
 ---
 
@@ -142,7 +144,8 @@ This is why the lab explicitly sets `Keepalive frequency: 10` seconds. AWS's IGW
 | IKE Phase 2 | Negotiates SAs for the actual tunnel |
 | NAT-T trigger | IKE NAT detection hash mismatch |
 | NAT-T encapsulation | ESP wrapped in UDP/4500 |
-| DPD keepalive | Periodic UDP/4500 to prevent NAT table expiry |
+| NAT-T keepalive | Periodic UDP/4500 packet that keeps NAT/state entries alive |
+| DPD | IKE liveness check that detects a dead peer and clears stale SAs |
 | AWS IGW role | 1:1 NAT between EIP and port1 private IP — makes NAT-T mandatory |
 
 </details>
@@ -153,11 +156,11 @@ This is why the lab explicitly sets `Keepalive frequency: 10` seconds. AWS's IGW
 
 Write each value down before you start configuring — typos are the most common reason a tunnel fails to come up.
 
-### AWS FortiGate (`Redwood-AWS-FGT`)
+### AWS FortiGate (`redwood-aws101-lab-fgt`)
 
 | Parameter | Value |
 | --- | --- |
-| Public IP (Elastic IP) | `<Redwood-AWS-FGT-EIP>` (from Lab 2 Step 4) |
+| Public IP (Elastic IP) | `<redwood-aws101-lab-fgt-eip>` (from Lab 2 Step 4) |
 | Local network | `10.100.0.0/16` |
 | WAN-side interface | `port1` |
 | LAN-side interface | `port2` (`10.100.2.4` static) |
@@ -179,7 +182,7 @@ Write each value down before you start configuring — typos are the most common
 | IKE Version | `IKEv2` |
 | Authentication | `Pre-shared Key` |
 | NAT Traversal | **Enabled** |
-| Keepalive (DPD) frequency | `10` seconds |
+| NAT-T keepalive frequency | `10` seconds |
 | Phase 1 encryption / hash / DH | `AES-256 / SHA-256 / DH Group 14` (auto-set by the wizard) |
 
 ### Configuration Summary
@@ -187,7 +190,7 @@ Write each value down before you start configuring — typos are the most common
 | Parameter | On-Premises FortiGate | AWS FortiGate |
 | --- | --- | --- |
 | Tunnel name | `to_aws` | `to_on_prem` |
-| Remote peer IP | `<Redwood-AWS-FGT-EIP>` | `<on-prem-public-ip>` |
+| Remote peer IP | `<redwood-aws101-lab-fgt-eip>` | `<on-prem-public-ip>` |
 | Remote subnets | `10.100.0.0/16` | `192.168.0.0/22` |
 | Local subnets | `192.168.0.0/22` | `10.100.0.0/16` |
 | WAN interface | `port1` | `port1` |
@@ -198,12 +201,12 @@ Write each value down before you start configuring — typos are the most common
 
 ## Step 1: Allow IPsec Traffic to the AWS FortiGate
 
-In Lab 2 you created `Redwood-AWS-FGT-SG` with rules for `HTTPS` (443), `SSH` (22), inbound VIP ports (2222 and 8080), and all traffic from the VPC CIDR. IKE and ESP-over-NAT-T (UDP 500 and 4500) were not opened — they were not needed until now. The on-premises FortiGate's IKE packets must reach the AWS FortiGate's `port1` ENI for the tunnel to come up, so you'll add those two rules.
+In Lab 2 you created `redwood-aws101-lab-fgt-sg` with rules for `HTTPS` (443), `SSH` (22), inbound VIP ports (2222 and 8080), and all traffic from the VPC CIDR. IKE and ESP-over-NAT-T (UDP 500 and 4500) were not opened — they were not needed until now. The on-premises FortiGate's IKE packets must reach the AWS FortiGate's `port1` ENI for the tunnel to come up, so you'll add those two rules.
 
 1. **Open the AWS FortiGate security group:**
    - In the top search bar, type `EC2` and click **EC2** (the service result)
    - In the left navigation menu under **Network & Security**, click **Security Groups**
-   - Select `Redwood-AWS-FGT-SG`
+   - Select `redwood-aws101-lab-fgt-sg`
 
    ![SECURITY GROUPS](images/step1.1.png)
 
@@ -225,9 +228,9 @@ In Lab 2 you created `Redwood-AWS-FGT-SG` with rules for `HTTPS` (443), `SSH` (2
 
 ### Validation
 
-- [x] `Redwood-AWS-FGT-SG` shows the two new rules with **Inbound** type
+- [x] `redwood-aws101-lab-fgt-sg` shows the two new rules with **Inbound** type
 - [x] Source for each rule is the on-prem FortiGate's public IP (`/32`)
-- [x] No other AWS-side change is needed — outbound is allowed by default in a security group, and the existing `Redwood-AWS-RT-Private` route table already steers `Private-Subnet` traffic to FortiGate's `port2`
+- [x] No other AWS-side change is needed — outbound is allowed by default in a security group, and the existing `redwood-aws101-lab-rt-private` route table already steers `redwood-aws101-lab-subnet-private-1a` traffic to FortiGate's `port2`
 
 ---
 
@@ -297,7 +300,7 @@ The FortiGate VPN Wizard generates the tunnel interface, the Phase 1 / Phase 2 s
      | --- | --- |
      | Remote site device type | Fortinet (click on the logo) |
      | Remote site device | `Accessible and static` |
-     | IP/FQDN | `<Redwood-AWS-FGT-EIP>` (from Lab 2) |
+     | IP/FQDN | `<redwood-aws101-lab-fgt-eip>` (from Lab 2) |
      | Route this device's internet traffic through the remote site. | `Off` |
      | Remote site subnets that can access VPN | `10.100.0.0/16` |
 
@@ -349,7 +352,7 @@ Now mirror the configuration on the AWS FortiGate. Same wizard, swapped local an
 
 ## Step 4: Create the VPN Tunnel `to_on_prem` on the AWS FortiGate
 
-1. **Log into the AWS FortiGate** at `https://<Redwood-AWS-FGT-EIP>` (or open an existing browser tab from Lab 3).
+1. **Log into the AWS FortiGate** at `https://<redwood-aws101-lab-fgt-eip>` (or open an existing browser tab from Lab 3).
 
 2. **Start the VPN Wizard:**
    - Click **VPN → VPN Wizard**
@@ -437,7 +440,8 @@ Configuration is now symmetric on both sides. The IKE Phase 1 negotiation should
 ## Step 5: Verify Tunnel Status on Both FortiGates
 
 1. **AWS FortiGate — confirm `to_on_prem`:**
-   - In the AWS FortiGate GUI, navigate to **Dashboard → Network Monitor → VPN** widget
+   - In the AWS FortiGate GUI, navigate to **Dashboard → Network → IPsec** widget
+     <!-- TODO: verify the IPsec monitor GUI path for the FortiOS version in use -->
    - Confirm the tunnel `to_on_prem` shows:
 
      | Indicator | Expected |
@@ -480,9 +484,9 @@ Configuration is now symmetric on both sides. The IKE Phase 1 negotiation should
 
 Generate real traffic in both directions and confirm it flows through the tunnel.
 
-#### 6.1 Test On-Premises to Redwood-AWS
+#### 6.1 Test On-Premises to AWS
 
-We'll test connectivity from the on-premises Windows VM to the Redwood-AWS.
+We'll test connectivity from the on-premises Windows VM to the AWS test VM.
 
 1. **Connect to On-Prem VM:**
    - RDP to on-prem Windows VM using the FortiGate public IP address on port 9833.
@@ -493,13 +497,13 @@ We'll test connectivity from the on-premises Windows VM to the Redwood-AWS.
    - Type **PowerShell**
    - Click **Windows PowerShell**
 
-3. **Test Connectivity to Redwood-AWS:**
+3. **Test Connectivity to the AWS test VM:**
 
    ```powershell
    Test-NetConnection -ComputerName 10.100.2.10 -Port 22
    ```
 
-   **Target:** 10.100.2.10 is Redwood-AWS-TestVM in AWS
+   **Target:** 10.100.2.10 is redwood-aws101-lab-testvm in AWS
 
    **Expected Result:**
 
@@ -519,13 +523,13 @@ We'll test connectivity from the on-premises Windows VM to the Redwood-AWS.
 - [x] Test-NetConnection succeeds (TcpTestSucceeded: True)
 - [x] Traffic traversing VPN tunnel
 
-#### 6.2 Test Redwood-AWS-TestVM to On-Premises
+#### 6.2 Test redwood-aws101-lab-testvm to On-Premises
 
 Now test the reverse direction.
 
-1. **Connect to AWS Redwood-AWS-TestVM:**
+1. **Connect to AWS redwood-aws101-lab-testvm:**
 
-   - SSH into the `Redwood-AWS-TestVM`
+   - SSH into the `redwood-aws101-lab-testvm`
 
 2. **Test Connectivity to On-Prem:**
 
@@ -554,7 +558,7 @@ Now test the reverse direction.
 
 **Check 1: VPN Tunnel Status:**
 
-- Is tunnel "up" on both sides? (Step 6)
+- Is tunnel "up" on both sides? (Step 5)
 - If down, fix tunnel before testing traffic
 
 **Check 2: Firewall Policies (On-Prem FortiGate):**
@@ -567,7 +571,7 @@ Now test the reverse direction.
 - Source: 192.168.0.0/22, Destination: 10.100.0.0/16
 - Action: ACCEPT, Status: Enabled
 
-**Check 3: Firewall Policies (Redwood-AWS-FGT):**
+**Check 3: Firewall Policies (redwood-aws101-lab-fgt):**
 
 - Navigate to **Policy & Objects → Firewall Policy**
 - Verify policies exist:
@@ -580,13 +584,13 @@ Now test the reverse direction.
 
 - **On-Prem FortiGate**: Navigate to **Dashboard → Routing**
 - Verify route to `10.100.0.0/16` via `to_aws` interface
-- **Redwood-AWS-FGT** FortiGate: Navigate to **Dashboard → Routing**
+- **redwood-aws101-lab-fgt** FortiGate: Navigate to **Dashboard → Routing**
 - Verify route to `192.168.0.0/22` via `to_on_prem` interface
 
 **Check 5: Use FortiGate Packet Capture:**
 
 ```bash
-# On Redwood-AWS-FGT FortiGate CLI:
+# On redwood-aws101-lab-fgt FortiGate CLI:
 diagnose sniffer packet any "host 10.100.2.10 and host 192.168.2.10" 4 20
 # Generate traffic from VM
 # Watch for packets entering port2, encrypting, exiting via VPN
@@ -606,9 +610,9 @@ Redwood Industries now has a working hybrid network — encrypted, inspected, an
 
 1. **The VPN wizard creates everything you need on FortiGate.** Tunnel interface, Phase 1, Phase 2, both directional firewall policies, and the static route to the remote subnet — all in one submission. In production, review the auto-created policies and tighten the source/destination if you don't want any-to-any across the tunnel.
 
-2. **AWS routing did not change.** Lab 2's `Redwood-AWS-RT-Private` (default route → `port2` ENI) handles AWS-to-on-prem traffic exactly the same way it handles AWS-to-Internet traffic — both leave the test VM toward `port2`, FortiGate decides where to send them next based on its **own** routing table (which now has a more-specific route for `192.168.0.0/22` via the tunnel). No AWS route table edits, no Transit Gateway, no AWS Site-to-Site VPN Gateway.
+2. **AWS routing did not change.** Lab 2's `redwood-aws101-lab-rt-private` (default route → `port2` ENI) handles AWS-to-on-prem traffic exactly the same way it handles AWS-to-Internet traffic — both leave the test VM toward `port2`, FortiGate decides where to send them next based on its **own** routing table (which now has a more-specific route for `192.168.0.0/22` via the tunnel). No AWS route table edits, no Transit Gateway, no AWS Site-to-Site VPN Gateway.
 
-3. **The Elastic IP earns its keep again.** It is the stable IKE peer address that the on-prem FortiGate must know. If the EIP changed (for example, because someone disassociated and released it), the on-prem side would point at a stale address and the tunnel would never re-establish. Treat `Redwood-AWS-FGT-EIP` as a long-lived resource for as long as the VPN exists.
+3. **The Elastic IP earns its keep again.** It is the stable IKE peer address that the on-prem FortiGate must know. If the EIP changed (for example, because someone disassociated and released it), the on-prem side would point at a stale address and the tunnel would never re-establish. Treat `redwood-aws101-lab-fgt-eip` as a long-lived resource for as long as the VPN exists.
 
 4. **Hybrid security is centralized at FortiGate.** Every cross-site flow is logged on both ends, NAT-free across the tunnel (workloads see each other's real IPs), and subject to whatever policies and security profiles you turn on at the FortiGates. There is no shared-key tunnel terminating in a black-box AWS service — Redwood's security team can troubleshoot, audit, and inspect every byte.
 
@@ -629,8 +633,8 @@ Redwood Industries now has a working hybrid network — encrypted, inspected, an
 
 | From | Command |
 | --- | --- |
-| AWS test VM | `nc -zv 192.168.2.10 22` |
-| On-prem host | `nc -zv 10.100.2.10 22` |
+| AWS test VM | `nc -zv 192.168.2.10 3389` |
+| On-prem Windows host (PowerShell) | `Test-NetConnection -ComputerName 10.100.2.10 -Port 22` |
 | AWS or on-prem FortiGate CLI | `diagnose vpn ike gateway list name <tunnel>` |
 | AWS or on-prem FortiGate CLI | `diagnose vpn tunnel list name <tunnel>` |
 
@@ -640,13 +644,13 @@ Redwood Industries now has a working hybrid network — encrypted, inspected, an
 
 Before declaring the workshop complete, verify:
 
-- [ ] AWS security group `Redwood-AWS-FGT-SG` allows inbound UDP/500 and UDP/4500 from the on-prem FortiGate's public IP
+- [ ] AWS security group `redwood-aws101-lab-fgt-sg` allows inbound UDP/500 and UDP/4500 from the on-prem FortiGate's public IP
 - [ ] On-prem FortiGate has tunnel `to_aws` with status **Up**, Phase 1 and Phase 2 both active
 - [ ] AWS FortiGate has tunnel `to_on_prem` with status **Up**, Phase 1 and Phase 2 both active
-- [ ] Both sides have NAT-T enabled and the AWS side was configured with "This site is behind NAT"
+- [ ] Both sides have NAT-T enabled with a keepalive frequency of 10 seconds
 - [ ] Static routes auto-created on both FortiGates point at the correct tunnel interface
 - [ ] Two firewall policies exist on each side (one outbound, one inbound) covering the cross-site CIDRs
-- [ ] `nc -zv` succeed in both directions between AWS `Private-Subnet` and on-prem `192.168.0.0/22`
+- [ ] TCP tests (`nc -zv` from AWS, `Test-NetConnection` from on-prem) succeed in both directions between AWS `redwood-aws101-lab-subnet-private-1a` and on-prem `192.168.0.0/22`
 - [ ] Forward Traffic logs on both FortiGates show the tunnel interface for cross-site traffic
 
 ---
@@ -674,28 +678,32 @@ You've now built the full Redwood Industries AWS-101 reference architecture:
 - *"We're moving to AWS — how do we keep using FortiGate?"* → You can sketch the architecture and walk through the deployment.
 - *"AWS Network Firewall is too expensive at scale."* → You can articulate the FortiGate alternative with concrete pricing and feature differences.
 - *"We need our cloud workloads to talk to on-prem."* → You can demonstrate the FortiGate IPsec tunnel option without an AWS VPN Gateway.
-- *"How do we inspect east-west traffic?"* → You can explain the AWS local-route limitation, the per-workload-subnet pattern, and where Gateway Load Balancer (covered in AWS-102) and the Inspection VPC pattern (covered in AWS-103) come in.
+- *"How do we inspect east-west traffic?"* → You can explain the AWS local-route limitation, the per-workload-subnet pattern, and where Gateway Load Balancer and the Inspection VPC pattern (covered in AWS-103) come in.
 
 ### Recommended Next Steps
 
-- **AWS-102: HA** — high availability with two FortiGates, AWS Network Load Balancer, multi-AZ designs
+- **AWS-102: HA** — FortiGate FGCP active-passive high availability across two Availability Zones
 - **AWS-103: Hub-and-Spoke with Transit Gateway** — Inspection VPC pattern, GWLB + FortiGate fleet, centralized egress and east-west inspection
 - **AWS-201: Advanced Security & Automation** — Terraform / Ansible / CloudFormation for FortiGate, FortiManager-managed AWS deployments, FortiAnalyzer / SIEM integration
 
 ### Clean-Up
 
-When you're done, the tag-based AWS Resource Group makes clean-up trivial:
+When you're done, the tag-based AWS Resource Group makes clean-up trivial. Work in this order, because some resources cannot be deleted while others still depend on them:
 
-1. **AWS Resource groups → Resources → Saved Resource Groups →`Redwood-AWS-RG`** — confirm every resource you created shows up here (filtered by `Project=Redwood-AWS-101`)
-2. Terminate the FortiGate and Test VM EC2 instances
-3. Release the Elastic IP `Redwood-AWS-FGT-EIP`
-4. Delete `Redwood-AWS-FGT-port2` ENI, the security groups, and the key pair
-5. Go to VPN and delete the VPC `Redwood-AWS-VPC` (deleting the VPC will also delete the subnets, route tables and the IGW.
-6. Delete the Resource Group itself.
+1. **Resource Groups & Tag Editor → Saved resource groups → `redwood-aws101-lab-rg`** — review every resource you created (filtered by `Project=Redwood-AWS-101`)
+2. **EC2 → Instances** — terminate `redwood-aws101-lab-fgt` and `redwood-aws101-lab-testvm`, and wait until both show **Terminated**
+3. **EC2 → Elastic IPs** — release `redwood-aws101-lab-fgt-eip` (disassociate it first if it is still associated)
+4. **EC2 → Network Interfaces** — delete `redwood-aws101-lab-fgt-eni-port2` if it still exists
+5. **EC2 → Security Groups** — delete `redwood-aws101-lab-testvm-sg` and `redwood-aws101-lab-fgt-sg`
+6. **EC2 → Key Pairs** — delete `redwood-aws101-lab-kp`, then delete the local `.pem` / `.ppk` file
+7. **VPC → Your VPCs** — delete `redwood-aws101-lab-vpc` (the console also deletes its subnets and route tables, and detaches and deletes the IGW)
+8. **Resource Groups & Tag Editor** — delete `redwood-aws101-lab-rg`, then use **Tag Editor** to search all Regions for `Project=Redwood-AWS-101` and confirm nothing is left
 
 **Optionally:**
 
-7. On the on-prem FortiGate, remove the `to_aws` tunnel and its auto-created policies/routes
+9. On the on-prem FortiGate, remove the `to_aws` tunnel and its auto-created policies/routes
+
+> **Well-Architected – Cost Optimization / Sustainability:** An unattached Elastic IP, a stopped instance's EBS volumes, and a forgotten instance all keep billing and consuming capacity. Clean-up is complete only when the Tag Editor search returns no resources.
 
 ---
 
@@ -717,14 +725,14 @@ When you're done, the tag-based AWS Resource Group makes clean-up trivial:
 | TCP connectivity fails one direction, succeeds the other | Auto-created firewall policy missing or disabled | Verify both `port2 → tunnel` and `tunnel → port2` policies exist and are **Enabled** on the failing side |
 | TCP connectivity fails | A security profile or shaper is blocking | Check **Log & Report → Forward Traffic** for `deny` entries; the workshop policies don't enable security profiles, so this should be rare |
 | Test VM reaches other AWS resources but not on-prem | FortiGate's own routing table missing the remote route | Check **Network → Static Routes** on the AWS FortiGate — `192.168.0.0/22 → to_on_prem` should exist (auto-created by wizard) |
-| On-prem can ping FortiGate `port2` IP (`10.100.2.4`) but not the test VM | AWS test VM SG doesn't allow ICMP from `192.168.0.0/22` | Add an inbound rule on `Redwood-AWS-TestVM-SG` for ICMP from `192.168.0.0/22` (or All ICMP - IPv4 from Anywhere if the workshop SG was already loosened) |
+| On-prem can ping FortiGate `port2` IP (`10.100.2.4`) but not the test VM | AWS test VM SG doesn't allow ICMP from `192.168.0.0/22` | Add an inbound rule on `redwood-aws101-lab-testvm-sg` for ICMP from `192.168.0.0/22` (or All ICMP - IPv4 from Anywhere if the workshop SG was already loosened) |
 
 ### Tunnel Flapping (Up → Down → Up)
 
 | Symptom | Likely cause | Fix |
 | --- | --- | --- |
-| Tunnel resets every 8 hours | IKEv2 rekey at lifetime expiry combined with a one-sided proposal mismatch | Confirm Phase 1 and Phase 2 lifetimes match on both sides (default 28800 / 1800) |
-| Tunnel resets randomly under load | NAT-T keepalive misconfiguration or AWS NAT timeout | Set DPD interval to 10s on both sides; verify NAT-T is enabled on both sides |
+| Tunnel resets every 8 hours | IKEv2 rekey at lifetime expiry combined with a one-sided proposal mismatch | Confirm Phase 1 and Phase 2 lifetimes match on both sides <!-- TODO: verify FortiOS default Phase 1 / Phase 2 key lifetimes --> |
+| Tunnel resets randomly when idle | NAT/state entry expired in the path | Verify NAT-T is enabled on both sides with a keepalive frequency of 10 seconds |
 | Tunnel up briefly after wizard completes, then drops | The wizard's auto-created firewall policy may be in the wrong order behind a deny-all | **Policy & Objects → Firewall Policy** — drag the VPN policies above any catch-all deny |
 
 ---
@@ -764,6 +772,6 @@ diagnose sniffer packet any "host 10.100.2.10 and host 192.168.2.10" 4 50
 
 ---
 
-*Lab Guide Version 1.0 — May 2026*
+*Lab Guide Version 1.1 — September 2026*
 *Questions? Ask your instructor or refer to the troubleshooting section.*
 *End of AWS-101 — congratulations.*

@@ -8,8 +8,9 @@
 - Active region access to `ca-central-1` (Canada Central)
 - **FortiFlex token** for FortiGate BYOL licensing — required for Lab 2 (obtain from your instructor before the workshop begins)
 
-> [!NOTE]
-> MFA for the IAM user is recommended. Do not use the root account, observing the AWS Security pillar best practices.
+> **Well-Architected – Security:** Run this workshop in a dedicated sandbox account, sign in with an MFA-protected IAM identity, and never use the root user. `AdministratorAccess` is acceptable only because the account is isolated and short-lived.
+
+> **Well-Architected – Cost Optimization:** The FortiGate and test instances, their EBS volumes, and the Elastic IP (public IPv4 addresses are billed hourly) all accrue charges while they exist. Follow the **Clean-Up** section at the end of Lab 4 when you finish.
 
 ### Objective
 
@@ -45,23 +46,37 @@ Your network team is preparing AWS infrastructure for the first cloud workloads.
 
 ---
 
-## Tagging Strategy (Read Before You Start)
+## Naming & Tagging Strategy (Read Before You Start)
 
-Unlike Azure, AWS does not have a "Resource Group" container that owns resources — AWS resources live in a region/VPC and are grouped logically through **tags**. You will apply a single `Project` tag to **every resource** created in this workshop:
+AWS resources live in a Region (and, for zonal resources such as subnets, in an Availability Zone). They are organized logically through **consistent names and tags**.
+
+**Naming convention:** every AWS resource in this workshop is named `<company>-<workshop>-<environment>-<resource>`, with the Availability Zone suffix appended only to zonal resources:
+
+| Resource | Name |
+| --- | --- |
+| VPC | `redwood-aws101-lab-vpc` |
+| Subnets (zonal) | `redwood-aws101-lab-subnet-public-1a`, `redwood-aws101-lab-subnet-private-1a` |
+| FortiGate instance | `redwood-aws101-lab-fgt` |
+| Security group | `redwood-aws101-lab-fgt-sg` |
+
+**Standard tags:** apply these four tags to **every resource** you create:
 
 | Tag Key | Tag Value |
 | --- | --- |
+| `Name` | the resource name, per the convention above |
 | `Project` | `Redwood-AWS-101` |
+| `Environment` | `lab` |
+| `Owner` | `<your-name>` (your name or e-mail alias) |
 
-The `Name` tag is set automatically by the AWS console whenever you fill in a resource's **Name** field, so you do not need to add it manually as a tag.
+The `Name` tag is set automatically by the AWS console whenever you fill in a resource's **Name** field, so you do not need to add it manually. The tag tables in each step list the remaining three tags.
 
-Consistent tagging on `Project` powers the Resource Group's filter (Step 1), enables cost allocation reports, and makes end-of-workshop clean-up trivial — filter by `Project=Redwood-AWS-101` and delete everything in one pass. The `-101` suffix is so that subsequent workshops (AWS-102, AWS-201, …) keep their resources cleanly separated.
+Consistent tagging on `Project` powers the Resource Group's filter (Step 1), enables cost allocation reports, and makes end-of-workshop clean-up trivial — filter by `Project=Redwood-AWS-101` and delete everything in one pass. `Owner` identifies who created a resource in a shared account.
 
 ---
 
 ## Step 1: Create an AWS Resource Group (Optional)
 
-AWS Resource Groups provide a tag-based view of all resources belonging to this workshop — similar in spirit to an Azure Resource Group. This step is optional but strongly recommended for easy clean-up at the end of the workshop.
+A tag-based AWS Resource Group gives you a single view of every resource carrying the `Project=Redwood-AWS-101` tag, across services. This step is optional but strongly recommended for easy clean-up at the end of the workshop.
 
 > [!NOTE]
 > Do not block the pop-ups in your browser for the AWS Management Console!
@@ -94,11 +109,13 @@ AWS Resource Groups provide a tag-based view of all resources belonging to this 
      | Tag Key | `Project` |
      | Tag Value | `Redwood-AWS-101` |
      | **Group details** | |
-     | Group name | `Redwood-AWS-RG` |
+     | Group name | `redwood-aws101-lab-rg` |
      | Group description | `Redwood Industries AWS-101 workshop resources` |
      | **Group tags** | |
-     | Key | `Name` |
-     | Value | `Redwood-AWS-RG` |
+     | `Name` | `redwood-aws101-lab-rg` |
+     | `Project` | `Redwood-AWS-101` |
+     | `Environment` | `lab` |
+     | `Owner` | `<your-name>` |
 
      ![RG PARAMETERS I](images/step1.3.b.png)
      ![RG PARAMETERS II](images/step1.3.c.png)
@@ -109,7 +126,7 @@ AWS Resource Groups provide a tag-based view of all resources belonging to this 
 
 ### Validation
 
-- [x] Resource Group `Redwood-AWS-RG` appears under **Saved resource groups**
+- [x] Resource Group `redwood-aws101-lab-rg` appears under **Saved resource groups**
 - [x] The group will populate automatically as you create resources with the `Project=Redwood-AWS-101` tag in the next steps
 
 ### Troubleshooting
@@ -124,7 +141,7 @@ AWS Resource Groups provide a tag-based view of all resources belonging to this 
 
 ## Step 2: Create the VPC
 
-The Virtual Private Cloud (VPC) provides the private IP address space for all AWS resources in this workshop. Think of it as your datacenter network in the cloud — it is the AWS equivalent of an Azure VNet.
+The Virtual Private Cloud (VPC) provides the private IP address space for all AWS resources in this workshop. Think of it as your data centre network in the cloud: a logically isolated network in one Region, whose subnets you place in specific Availability Zones.
 
 1. **Navigate to the VPC console:**
    - In the top search bar, type `VPC`
@@ -144,7 +161,7 @@ The Virtual Private Cloud (VPC) provides the private IP address space for all AW
    | Parameter | Value |
    | --- | --- |
    | Resources to create | VPC only |
-   | Name tag | `Redwood-AWS-VPC` |
+   | Name tag | `redwood-aws101-lab-vpc` |
    | IPv4 CIDR block | IPv4 CIDR manual input |
    | IPv4 CIDR | `10.100.0.0/16` |
    | IPv6 CIDR block | No IPv6 CIDR block |
@@ -160,6 +177,8 @@ The Virtual Private Cloud (VPC) provides the private IP address space for all AW
    | Tag Key | Tag Value |
    | --- | --- |
    | `Project` | `Redwood-AWS-101` |
+   | `Environment` | `lab` |
+   | `Owner` | `<your-name>` |
 
    ![VPC TAG + CREATE](images/step2.4.png)
 
@@ -171,7 +190,7 @@ The Virtual Private Cloud (VPC) provides the private IP address space for all AW
 
 ### Validation
 
-- [x] VPC `Redwood-AWS-VPC` appears in the **Your VPCs** list
+- [x] VPC `redwood-aws101-lab-vpc` appears in the **Your VPCs** list
 - [x] State shows **Available**
 - [x] IPv4 CIDR shows `10.100.0.0/16`
 - [x] Region is `ca-central-1`
@@ -215,19 +234,21 @@ The public subnet will host FortiGate's `port1` Elastic Network Interface (ENI),
 
    | Parameter | Value |
    | --- | --- |
-   | VPC ID | `Redwood-AWS-VPC` |
-   | Subnet name | `Public-Subnet` |
+   | VPC ID | `redwood-aws101-lab-vpc` |
+   | Subnet name | `redwood-aws101-lab-subnet-public-1a` |
    | Availability Zone | `ca-central-1a` |
    | IPv4 subnet CIDR block | `10.100.1.0/24` |
 
 > [!IMPORTANT]
-> Both subnets in this lab MUST be in the same Availability Zone (`ca-central-1a`). Unlike Azure, AWS subnets are AZ-scoped — a FortiGate ENI can only attach to subnets in its own AZ. Also note that AWS reserves 5 IPs per `/24` subnet (`.0`, `.1`, `.2`, `.3`, and `.255`), leaving 251 usable.
+> Both subnets in this lab MUST be in the same Availability Zone (`ca-central-1a`). AWS subnets are zonal — an ENI can only attach to an instance in the same Availability Zone as its subnet. Also note that AWS reserves 5 IPs per `/24` subnet (`.0`, `.1`, `.2`, `.3`, and `.255`), leaving 251 usable.
 
 3. **Tags:** add the standard tags.
 
    | Tag Key | Tag Value |
    | --- | --- |
    | `Project` | `Redwood-AWS-101` |
+   | `Environment` | `lab` |
+   | `Owner` | `<your-name>` |
 
    ![SUBNET PARAMS I](images/step3.2.png)
    ![SUBNET PARAMS II](images/step3.3.png)
@@ -236,7 +257,7 @@ The public subnet will host FortiGate's `port1` Elastic Network Interface (ENI),
 
 ### Validation
 
-- [x] `Public-Subnet` appears in the subnets list
+- [x] `redwood-aws101-lab-subnet-public-1a` appears in the subnets list
 - [x] CIDR shows `10.100.1.0/24`
 - [x] Availability Zone shows `ca-central-1a`
 - [x] Available IPv4 addresses shows **251**
@@ -263,8 +284,8 @@ The Private subnet hosts FortiGate's `port2` ENI **and** the protected workloads
 
    | Parameter | Value |
    | --- | --- |
-   | VPC ID | `Redwood-AWS-VPC` |
-   | Subnet name | `Private-Subnet` |
+   | VPC ID | `redwood-aws101-lab-vpc` |
+   | Subnet name | `redwood-aws101-lab-subnet-private-1a` |
    | Availability Zone | `ca-central-1a` (same AZ as Public) |
    | IPv4 subnet CIDR block | `10.100.2.0/24` |
 
@@ -273,15 +294,17 @@ The Private subnet hosts FortiGate's `port2` ENI **and** the protected workloads
    | Tag Key | Tag Value |
    | --- | --- |
    | `Project` | `Redwood-AWS-101` |
+   | `Environment` | `lab` |
+   | `Owner` | `<your-name>` |
 
 3. Click **Create subnet**
 
 ### Validation
 
-- [x] `Private-Subnet` appears in the subnets list
+- [x] `redwood-aws101-lab-subnet-private-1a` appears in the subnets list
 - [x] CIDR shows `10.100.2.0/24`
 - [x] Availability Zone shows `ca-central-1a`
-- [x] Two subnets now visible (`Public-Subnet` and `Private-Subnet`)
+- [x] Two subnets now visible (`redwood-aws101-lab-subnet-public-1a` and `redwood-aws101-lab-subnet-private-1a`)
 
 ![SUBNETS](images/step4.3.png)
 
@@ -297,38 +320,36 @@ The Private subnet hosts FortiGate's `port2` ENI **and** the protected workloads
 > In Lab 2, `10.100.2.4` must be assigned as a **static** private IP on the FortiGate `port2` ENI — not a DHCP lease. The Private subnet's route table will point `0.0.0.0/0` at this exact IP, so it cannot be allowed to change.
 
 <details>
-<summary> <b>Why isn't there a separate "Protected" subnet (and how this differs from Azure)?</b></summary>
+<summary> <b>Why isn't there a separate "Protected" subnet?</b></summary>
 
 Fortinet's official single-FortiGate-VM reference architecture for AWS uses **two subnets**: Public (port1) and Private (port2 + workloads share this subnet).
 
-This is **different from Azure**, where Fortinet's reference design (and the matching AZ-101 workshop) uses **three subnets**: Public + Private (port2 only, transit) + Protected (workloads). On Azure, a User-Defined Route in the Protected subnet steers workload traffic to FortiGate's port2 in the Private subnet, and Azure UDRs can override even intra-subnet routes — making subnet separation cleanly enforceable.
-
-On AWS, the equivalent 3-subnet split would not actually improve security in this single-VM lab, because AWS subnet route tables only apply to traffic *leaving* the subnet — FortiGate's own egress (FortiGuard, updates) uses its internal routing table out `port1` and creates no forwarding loop when `port2` and workloads share `Private-Subnet`. A dedicated "Transit" subnet on AWS only earns its keep in HA, multi-AZ, GWLB, or hub-and-spoke designs (covered in AWS-102 / AWS-201).
+A 3-subnet split (Public + a transit subnet for `port2` only + a separate workload subnet) would not actually improve security in this single-VM lab, because AWS subnet route tables only apply to traffic *leaving* the subnet — FortiGate's own egress (FortiGuard, updates) uses its internal routing table out `port1` and creates no forwarding loop when `port2` and workloads share `redwood-aws101-lab-subnet-private-1a`. Dedicated transit, HA-sync, and management subnets earn their keep in HA and multi-AZ designs (AWS-102) and in GWLB or Transit Gateway hub-and-spoke designs (AWS-103).
 </details>
 
 <details>
-<summary><b>East-west traffic inside `Private-Subnet` is NOT inspected by this lab's design.</b></summary>
+<summary><b>East-west traffic inside `redwood-aws101-lab-subnet-private-1a` is NOT inspected by this lab's design.</b></summary>
 
-Two EC2 instances sitting in the **same** AWS subnet communicate directly via the VPC's implicit `local` route. AWS does not allow that route to be overridden for intra-subnet traffic — no subnet route table entry can intercept traffic between two ENIs in the same subnet. So if you add a second workload to `Private-Subnet`, traffic between it and the test VM will bypass FortiGate entirely.
+Two EC2 instances sitting in the **same** AWS subnet communicate directly via the VPC's implicit `local` route. AWS does not allow that route to be overridden for intra-subnet traffic — no subnet route table entry can intercept traffic between two ENIs in the same subnet. So if you add a second workload to `redwood-aws101-lab-subnet-private-1a`, traffic between it and the test VM will bypass FortiGate entirely.
 
-This is an **AWS fabric constraint**, not a FortiGate limitation. Note the contrast with Azure, where a User-Defined Route (UDR) **can** override the intra-subnet system route and force same-subnet traffic through an NVA.
+This is an **AWS fabric constraint**, not a FortiGate limitation.
 
-Production patterns that **do** inspect east-west on AWS — per-workload subnets with FortiGate `port2` as next-hop (using AWS "more specific routing"), AWS Gateway Load Balancer (GWLB) with GWLB endpoints, or a Transit Gateway hub-and-spoke through a centralized Inspection VPC — are covered in **AWS-102** and **AWS-201**.
+Production patterns that **do** inspect east-west on AWS — per-workload subnets with FortiGate `port2` as next-hop (using AWS "more specific routing"), AWS Gateway Load Balancer (GWLB) with GWLB endpoints, or a Transit Gateway hub-and-spoke through a centralized Inspection VPC — are covered in **AWS-103**.
 </details>
 
 **Traffic Flow (this lab):**
 
 ```text
 ---OUTBOUND---
-Workload (Private-Subnet) → port2 (inspect, NAT) → port1 → Internet Gateway → Internet 
+Workload (redwood-aws101-lab-subnet-private-1a) → port2 (inspect, NAT) → port1 → Internet Gateway → Internet 
 
 ---INBOUND---
-Internet → Internet Gateway → port1 (inspect, NAT) → port2 → Workload (Private-Subnet)
+Internet → Internet Gateway → port1 (inspect, NAT) → port2 → Workload (redwood-aws101-lab-subnet-private-1a)
 ```
 
 ```text
 ---EAST-WEST---
-Workload-A (Private-Subnet) ─── direct ENI-to-ENI ───> Workload-B (Private-Subnet)
+Workload-A (redwood-aws101-lab-subnet-private-1a) ─── direct ENI-to-ENI ───> Workload-B (redwood-aws101-lab-subnet-private-1a)
                          (NOT inspected — AWS local route)
 ```
 
@@ -339,7 +360,7 @@ Workload-A (Private-Subnet) ─── direct ENI-to-ENI ───> Workload-B (P
 AWS VPCs have no implicit internet connectivity. Public IP addresses on an EC2 instance are inert until an **Internet Gateway (IGW)** is attached to the VPC and a route points to it. In Lab 2, FortiGate's `port1` will use an Elastic IP — that requires an IGW to be in place first.
 
 > [!NOTE]
-> Both major hyperscalers now require **explicit** egress configuration. Azure retired its default outbound access on **September 30, 2025** and landed a second phase **March 31, 2026** where new Azure VNets default to "private subnet" mode, so new Azure VMs must reach the internet through a NAT Gateway, a Standard SKU public IP, a Standard Load Balancer with outbound rules, or an NVA with a public IP (e.g., FortiGate). AWS has always required this explicit configuration via an Internet Gateway plus a route — the design pattern in this lab is now functionally equivalent on both clouds.
+> Internet egress on AWS is always explicit: a subnet reaches the Internet only through an attached IGW **and** a route table entry that points to it. In this lab, all workload egress will be forced through FortiGate rather than routed to the IGW directly.
 
 1. **Navigate to Internet Gateways:**
    - In the VPC console left navigation menu, click **Internet gateways**
@@ -350,13 +371,15 @@ AWS VPCs have no implicit internet connectivity. Public IP addresses on an EC2 i
 
    | Parameter | Value |
    | --- | --- |
-   | Name tag | `Redwood-AWS-IGW` |
+   | Name tag | `redwood-aws101-lab-igw` |
 
    Add the standard tags:
 
    | Tag Key | Tag Value |
    | --- | --- |
    | `Project` | `Redwood-AWS-101` |
+   | `Environment` | `lab` |
+   | `Owner` | `<your-name>` |
 
    Click **Create internet gateway**.
 
@@ -368,7 +391,7 @@ AWS VPCs have no implicit internet connectivity. Public IP addresses on an EC2 i
 
    | Parameter | Value |
    | --- | --- |
-   | Available VPCs | `Redwood-AWS-VPC` |
+   | Available VPCs | `redwood-aws101-lab-vpc` |
 
    Click **Attach internet gateway**.
 
@@ -376,18 +399,18 @@ AWS VPCs have no implicit internet connectivity. Public IP addresses on an EC2 i
 
 ### Validation
 
-- [x] `Redwood-AWS-IGW` shows state **Attached**
-- [x] The "VPC ID" column shows `Redwood-AWS-VPC`
+- [x] `redwood-aws101-lab-igw` shows state **Attached**
+- [x] The "VPC ID" column shows `redwood-aws101-lab-vpc`
 
 ### Key Concept: IGW vs. Route Tables
 
-Attaching the IGW to the VPC does **not** automatically give any subnet internet access. A subnet only becomes "public" when its associated **Route Table** contains a route such as `0.0.0.0/0 → igw-xxxxxxxx`. The next step creates that route table for `Public-Subnet`. The `Private-Subnet` route table will be built in Lab 2 because its default route must point at FortiGate's `port2` ENI (which does not exist yet).
+Attaching the IGW to the VPC does **not** automatically give any subnet internet access. A subnet only becomes "public" when its associated **Route Table** contains a route such as `0.0.0.0/0 → igw-xxxxxxxx`. The next step creates that route table for `redwood-aws101-lab-subnet-public-1a`. The `redwood-aws101-lab-subnet-private-1a` route table will be built in Lab 2 because its default route must point at FortiGate's `port2` ENI (which does not exist yet).
 
 ---
 
 ## Step 6: Create and Associate the Public Subnet Route Table
 
-This route table makes `Public-Subnet` a true public subnet by sending `0.0.0.0/0` to the IGW you just attached. Without it, FortiGate's `port1` (deployed in Lab 2) cannot reach the Internet for FortiFlex licence activation, FortiGuard updates, or as the egress path for inspected traffic.
+This route table makes `redwood-aws101-lab-subnet-public-1a` a true public subnet by sending `0.0.0.0/0` to the IGW you just attached. Without it, FortiGate's `port1` (deployed in Lab 2) cannot reach the Internet for FortiFlex licence activation, FortiGuard updates, or as the egress path for inspected traffic.
 
 > [!NOTE]
 > AWS subnets default to using the VPC's **Main** route table (which only has the local route). You almost always want each subnet to have its own dedicated route table — the Main table should remain empty so any forgotten/unassociated subnet is non-routable by default rather than accidentally inheriting a permissive route.
@@ -401,17 +424,19 @@ This route table makes `Public-Subnet` a true public subnet by sending `0.0.0.0/
 
      | Parameter | Value |
      | --- | --- |
-     | Name | `Redwood-AWS-RT-Public` |
-     | VPC | `Redwood-AWS-VPC` |
+     | Name | `redwood-aws101-lab-rt-public` |
+     | VPC | `redwood-aws101-lab-vpc` |
      | Tags | |
      | `Project` | `Redwood-AWS-101` |
+     | `Environment` | `lab` |
+     | `Owner` | `<your-name>` |
 
    - Click **Create route table**
 
      ![CREATE RT](images/step6.1.b.png)
 
 2. **Add the default route to the IGW:**
-   - Open the new `Redwood-AWS-RT-Public` route table
+   - Open the new `redwood-aws101-lab-rt-public` route table
    - Click the **Routes** tab
 
      ![ROUTES](images/step6.2.a.png)
@@ -421,30 +446,30 @@ This route table makes `Public-Subnet` a true public subnet by sending `0.0.0.0/
      | Parameter | Value |
      | --- | --- |
      | Destination | `0.0.0.0/0` |
-     | Target | **Internet Gateway → `Redwood-AWS-IGW`** |
+     | Target | **Internet Gateway → `redwood-aws101-lab-igw`** |
 
    - Leave the existing `10.100.0.0/16 → local` row in place (it is implicit and immutable)
    - Click **Save changes**
 
      ![ADD ROUTE](images/step6.2.b.png)
 
-3. **Associate the route table with `Public-Subnet`:**
+3. **Associate the route table with `redwood-aws101-lab-subnet-public-1a`:**
    - Click the **Subnet associations** tab
    - Click **Edit subnet associations** 
 
-     ![alt text](images/step6.3.a.png)
+     ![EDIT SUBNET ASSOCIATIONS](images/step6.3.a.png)
 
-   - Select the `Public-Subnet` (`10.100.1.0/24`) subnet
+   - Select the `redwood-aws101-lab-subnet-public-1a` (`10.100.1.0/24`) subnet
    - Click **Save associations**
 
      ![SAVE ASSOCIATIONS](images/step6.3.b.png)
 
 ### Validation
 
-- [x] `Redwood-AWS-RT-Public` exists in **VPC → Route tables** with two routes: `10.100.0.0/16 → local` and `0.0.0.0/0 → Redwood-AWS-IGW`
-- [x] `Public-Subnet` appears under **Subnet associations** for `Redwood-AWS-RT-Public`
-- [x] `Private-Subnet` is **not** associated with this route table (it will get its own route table in Lab 2)
-- [x] The VPC's **Main** route table now shows only the implicit `local` route and no subnet associations on `Public-Subnet`
+- [x] `redwood-aws101-lab-rt-public` exists in **VPC → Route tables** with two routes: `10.100.0.0/16 → local` and `0.0.0.0/0 → redwood-aws101-lab-igw`
+- [x] `redwood-aws101-lab-subnet-public-1a` appears under **Subnet associations** for `redwood-aws101-lab-rt-public`
+- [x] `redwood-aws101-lab-subnet-private-1a` is **not** associated with this route table (it will get its own route table in Lab 2)
+- [x] The VPC's **Main** route table now shows only the implicit `local` route and no subnet associations on `redwood-aws101-lab-subnet-public-1a`
 
 ---
 
@@ -454,15 +479,15 @@ This route table makes `Public-Subnet` a true public subnet by sending `0.0.0.0/
 
 You have successfully built the AWS networking foundation for Redwood Industries:
 
-✅ **Resource Group:** `Redwood-AWS-RG` (tag-based) in `ca-central-1`  
-✅ **VPC:** `Redwood-AWS-VPC` (`10.100.0.0/16`)  
+✅ **Resource Group:** `redwood-aws101-lab-rg` (tag-based) in `ca-central-1`  
+✅ **VPC:** `redwood-aws101-lab-vpc` (`10.100.0.0/16`)  
 ✅ **Two Subnets** (both in `ca-central-1a`):
 
-- `Public-Subnet` (`10.100.1.0/24`) — For FortiGate `port1`
-- `Private-Subnet` (`10.100.2.0/24`) — For FortiGate `port2` and protected workloads
+- `redwood-aws101-lab-subnet-public-1a` (`10.100.1.0/24`) — For FortiGate `port1`
+- `redwood-aws101-lab-subnet-private-1a` (`10.100.2.0/24`) — For FortiGate `port2` and protected workloads
 
-✅ **Internet Gateway:** `Redwood-AWS-IGW` attached to `Redwood-AWS-VPC`  
-✅ **Public Route Table:** `Redwood-AWS-RT-Public` (`0.0.0.0/0 → Redwood-AWS-IGW`) associated with `Public-Subnet`
+✅ **Internet Gateway:** `redwood-aws101-lab-igw` attached to `redwood-aws101-lab-vpc`  
+✅ **Public Route Table:** `redwood-aws101-lab-rt-public` (`0.0.0.0/0 → redwood-aws101-lab-igw`) associated with `redwood-aws101-lab-subnet-public-1a`
 
 ### Architecture Review
 
@@ -486,7 +511,7 @@ Availability Zone: `ca-central-1a`
 
 4. **AZ awareness:** In AWS, subnets are tied to a specific Availability Zone. Placing both subnets in `ca-central-1a` is required so FortiGate's ENIs can live in the same AZ as the instance.
 
-5. **Public routing is in place; Private routing comes later.** `Public-Subnet` is now a fully functional public subnet — anything you place in it (including FortiGate's `port1` in Lab 2) can reach the Internet through the IGW. The `Private-Subnet` route table is deliberately deferred to Lab 2 because its default route must point at FortiGate's `port2` ENI, which doesn't exist yet.
+5. **Public routing is in place; Private routing comes later.** `redwood-aws101-lab-subnet-public-1a` is now a fully functional public subnet — anything you place in it (including FortiGate's `port1` in Lab 2) can reach the Internet through the IGW. The `redwood-aws101-lab-subnet-private-1a` route table is deliberately deferred to Lab 2 because its default route must point at FortiGate's `port2` ENI, which doesn't exist yet.
 
 ### Next Steps
 
@@ -495,10 +520,10 @@ You're ready for the Lab 2. Here's what's coming:
 **Lab 2 — FortiGate VM Deployment & Traffic Steering**:
 
 - Deploy a FortiGate EC2 instance from AWS Marketplace (BYOL with FortiFlex token)
-- Attach two ENIs: `port1` in `Public-Subnet` (with an Elastic IP), `port2` in `Private-Subnet` with a static private IP of `10.100.2.4`
+- Attach two ENIs: `port1` in `redwood-aws101-lab-subnet-public-1a` (with an Elastic IP), `port2` in `redwood-aws101-lab-subnet-private-1a` with a static private IP of `10.100.2.4`
 - Disable **Source/Destination check** on both ENIs
 - Activate the FortiFlex licence and access the FortiGate GUI
-- Create a Route Table for the `Private-Subnet` with `0.0.0.0/0 → FortiGate port2 ENI`
+- Create a Route Table for the `redwood-aws101-lab-subnet-private-1a` with `0.0.0.0/0 → FortiGate port2 ENI`
 
 ### Troubleshooting Reference
 
@@ -533,12 +558,12 @@ If you encountered issues during Lab 1, review this troubleshooting guide:
 Before moving to Lab 2, verify:
 
 - [ ] Active region is `ca-central-1` (Canada Central)
-- [ ] (Optional) Resource Group `Redwood-AWS-RG` exists and is tag-based on `Project=Redwood-AWS-101`
-- [ ] VPC `Redwood-AWS-VPC` has CIDR `10.100.0.0/16`
-- [ ] `Public-Subnet` exists with CIDR `10.100.1.0/24` in `ca-central-1a`
-- [ ] `Private-Subnet` exists with CIDR `10.100.2.0/24` in `ca-central-1a`
-- [ ] Internet Gateway `Redwood-AWS-IGW` is created and **attached** to `Redwood-AWS-VPC`
-- [ ] Route table `Redwood-AWS-RT-Public` exists with `0.0.0.0/0 → Redwood-AWS-IGW`, associated with `Public-Subnet`
+- [ ] (Optional) Resource Group `redwood-aws101-lab-rg` exists and is tag-based on `Project=Redwood-AWS-101`
+- [ ] VPC `redwood-aws101-lab-vpc` has CIDR `10.100.0.0/16`
+- [ ] `redwood-aws101-lab-subnet-public-1a` exists with CIDR `10.100.1.0/24` in `ca-central-1a`
+- [ ] `redwood-aws101-lab-subnet-private-1a` exists with CIDR `10.100.2.0/24` in `ca-central-1a`
+- [ ] Internet Gateway `redwood-aws101-lab-igw` is created and **attached** to `redwood-aws101-lab-vpc`
+- [ ] Route table `redwood-aws101-lab-rt-public` exists with `0.0.0.0/0 → redwood-aws101-lab-igw`, associated with `redwood-aws101-lab-subnet-public-1a`
 - [ ] Both subnets show an **Available** state with **251** available IPv4 addresses
 
 ### AWS CLI Verification (Optional)
@@ -551,7 +576,7 @@ export AWS_DEFAULT_REGION=ca-central-1
 
 # Verify the VPC
 aws ec2 describe-vpcs \
-  --filters "Name=tag:Name,Values=Redwood-AWS-VPC" \
+  --filters "Name=tag:Name,Values=redwood-aws101-lab-vpc" \
   --query "Vpcs[0].{VpcId:VpcId,CIDR:CidrBlock,State:State}" \
   --output table
 
@@ -563,13 +588,13 @@ aws ec2 describe-subnets \
 
 # Verify the Internet Gateway attachment
 aws ec2 describe-internet-gateways \
-  --filters "Name=tag:Name,Values=Redwood-AWS-IGW" \
+  --filters "Name=tag:Name,Values=redwood-aws101-lab-igw" \
   --query "InternetGateways[0].{IGW:InternetGatewayId,Attachments:Attachments}" \
   --output table
 
 # Verify the Public route table, its IGW route, and its subnet association
 aws ec2 describe-route-tables \
-  --filters "Name=tag:Name,Values=Redwood-AWS-RT-Public" \
+  --filters "Name=tag:Name,Values=redwood-aws101-lab-rt-public" \
   --query "RouteTables[0].{Name:Tags[?Key=='Name']|[0].Value,Routes:Routes[].[DestinationCidrBlock,GatewayId],AssocSubnets:Associations[].SubnetId}" \
   --output table
 ```
@@ -596,10 +621,10 @@ Expected output should match your configuration above.
 
 **Fortinet Documentation:**
 
-- FortiGate AWS Administration Guide: <https://docs.fortinet.com/document/fortigate-public-cloud/7.6.0/aws-administration-guide>
-- Deploying FortiGate-VM on AWS: <https://docs.fortinet.com/document/fortigate-public-cloud/7.6.0/aws-administration-guide/403036/deploying-fortigate-vm-on-aws>
+- FortiGate AWS Administration Guide: <https://docs.fortinet.com/document/fortigate-public-cloud/8.0.0/aws-administration-guide>
+- Deploying FortiGate-VM on AWS: <https://docs.fortinet.com/document/fortigate-public-cloud/8.0.0/aws-administration-guide/403036/deploying-fortigate-vm-on-aws>
 
 ---
 
-*Lab Guide Version 1.0 — May 2026*  
+*Lab Guide Version 1.1 — September 2026*  
 *Questions? Ask your instructor or refer to the main workshop materials.*

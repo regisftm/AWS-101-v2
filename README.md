@@ -8,7 +8,7 @@ Organizations are rapidly adopting Amazon Web Services (AWS) to accelerate digit
 
 In this workshop, participants will learn how to deploy FortiGate in AWS to protect their first cloud workloads. Using a realistic customer scenario, participants will build complete AWS networking infrastructure, deploy and license a FortiGate EC2 instance, configure security policies for north-south traffic inspection, and establish site-to-site IPsec VPN connectivity between AWS and on-premises environments.
 
-At the heart of this solution is FortiGate as a Next-Generation Firewall (NGFW) in AWS, providing the same security capabilities and operational consistency that organizations rely on in their on-premises deployments. Participants will discover how to leverage AWS Route Tables to force traffic inspection, configure SNAT for internet access, and use FortiGate's VPN capabilities to replace AWS Site-to-Site VPN or AWS Transit Gateway for hybrid connectivity — delivering significant cost savings compared to AWS Network Firewall or AWS Gateway Load Balancer solutions.
+At the heart of this solution is FortiGate as a Next-Generation Firewall (NGFW) in AWS, providing the same security capabilities and operational consistency that organizations rely on in their on-premises deployments. Participants will discover how to leverage AWS Route Tables to force traffic inspection, configure SNAT for internet access, and use FortiGate's IPsec VPN for hybrid connectivity instead of a managed AWS Site-to-Site VPN connection — keeping one security platform, one policy model, and one set of logs across on-premises and AWS, and avoiding the separate charges of AWS Network Firewall and managed VPN connections for this single-VPC design.
 
 ### Time Requirements
 
@@ -38,7 +38,7 @@ The estimated time to complete this workshop is 3 hours.
 
 ### Reference Architecture
 
-After completing this bootcamp, you will have deployed the following architecture.
+After completing this workshop, you will have deployed the following architecture.
 
 ![reference-architecture](aws-101-lab4/images/reference-architecture-final.png)
 
