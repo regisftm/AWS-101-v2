@@ -52,7 +52,7 @@ Deploy a FortiGate-VM with two interfaces (`port1` public, `port2` private), lic
    | Name | `redwood-aws101-lab-kp` |
    | Key pair type | `RSA` |
    | Private key file format | `.pem` (macOS/Linux/WSL) or `.ppk` (PuTTY) |
-   | Tags | standard tags |
+   | Tag | `Project` = `Redwood-AWS-101` |
 
    ![CREATE KEY PAIR](images/step2.2.png)
 
@@ -74,7 +74,13 @@ Deploy a FortiGate-VM with two interfaces (`port1` public, `port2` private), lic
 
    ![LAUNCH INSTANCE](images/step3.1.png)
 
-2. **Name and tags:** set Name to `redwood-aws101-lab-fgt`. Add the standard tags and apply them to **Instances, Volumes, Network interfaces**.
+2. **Name and tags:** click **Add additional tags**:
+
+   | Parameter | Value |
+   | --- | --- |
+   | Name | `redwood-aws101-lab-fgt` |
+   | Tag | `Project` = `Redwood-AWS-101` |
+   | Resource types | **Instances, Volumes, Network interfaces** |
 
    ![TAGS](images/step3.2.png)
 
@@ -145,7 +151,13 @@ In production, use a separate security group for each ENI role (Internet-facing 
 
 An Elastic IP is a persistent public address that belongs to your account. FortiGate needs a stable address for management, the Lab 3 VIPs, and the Lab 4 VPN peer.
 
-1. Open **EC2 → Elastic IPs → Allocate Elastic IP address**. Add the standard tags and `Name` = `redwood-aws101-lab-fgt-eip`, then click **Allocate**.
+1. Open **EC2 → Elastic IPs → Allocate Elastic IP address**, use the parameters below, and click **Allocate**:
+
+   | Parameter | Value |
+   | --- | --- |
+   | Public IPv4 address pool | Amazon's pool of IPv4 addresses |
+   | Tag | `Name` = `redwood-aws101-lab-fgt-eip` |
+   | Tag | `Project` = `Redwood-AWS-101` |
 
    ![ALLOCATE EIP](images/step4.1.a.png)
    ![ALLOCATE](images/step4.1.b.png)
@@ -179,7 +191,8 @@ An Elastic IP is a persistent public address that belongs to your account. Forti
    | Interface type | **ENA** |
    | Private IPv4 address | **Custom** → `10.100.2.4` |
    | Security groups | `redwood-aws101-lab-fgt-sg` |
-   | Tags | `Name` = `redwood-aws101-lab-fgt-eni-port2` + standard tags |
+   | Name tag | `redwood-aws101-lab-fgt-eni-port2` |
+   | Tag | `Project` = `Redwood-AWS-101` |
 
    ![CREATE](images/step5.2.gif)
 
@@ -274,7 +287,7 @@ This route table makes FortiGate the inspection point: any traffic leaving the p
    | --- | --- |
    | Name | `redwood-aws101-lab-rt-private` |
    | VPC | `redwood-aws101-lab-vpc` |
-   | Tags | standard tags |
+   | Tag | `Project` = `Redwood-AWS-101` |
 
    ![CREATE ROUTE TABLE](images/step9.1.b.png)
 

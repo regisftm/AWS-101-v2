@@ -16,15 +16,9 @@ Build a VPC, a public and a private subnet, an Internet Gateway, and the public 
 
 Resources are named `redwood-aws101-lab-<resource>` (zonal resources end with the AZ, e.g. `-1a`).
 
-Apply these **standard tags** to every resource. The console sets `Name` automatically from the **Name** field.
+Every resource gets one tag, `Project` = `Redwood-AWS-101`. It is included in each step's parameter table. The `Project` tag drives the Resource Group and lets you confirm during clean-up that nothing is left. The console sets the `Name` tag automatically from the **Name** field.
 
-| Tag Key | Tag Value |
-| --- | --- |
-| `Project` | `Redwood-AWS-101` |
-| `Environment` | `lab` |
-| `Owner` | `<your-name>` |
-
-The `Project` tag drives the Resource Group, cost reports, and clean-up. `Owner` identifies who created a resource in a shared account.
+Real deployments usually add more tags, such as `Environment` and `Owner`, for cost allocation and ownership.
 
 ---
 
@@ -43,7 +37,7 @@ A tag-based Resource Group lists every workshop resource in one place, which mak
 
    ![RESOURCE GROUPS](images/step1.2.png)
 
-3. Click **Create resource group**:
+3. Click **Create Resource Group**:
 
    ![CREATE RESOURCE GROUP](images/step1.3.a.png)
 
@@ -53,12 +47,12 @@ A tag-based Resource Group lists every workshop resource in one place, which mak
    | Resource types | All supported resource types |
    | Tag Key / Value | `Project` / `Redwood-AWS-101` |
    | Group name | `redwood-aws101-lab-rg` |
-   | Group tags | standard tags |
+   | Group tag | `Project` = `Redwood-AWS-101` |
 
    ![RG PARAMETERS I](images/step1.3.b.png)
    ![RG PARAMETERS II](images/step1.3.c.png)
 
-4. Click **Create group**.
+4. Click **Create group**, and then click **Saved Resource Groups** to verify that the resource group was created.
 
    ![RG CREATED](images/step1.4.png)
 
@@ -74,7 +68,7 @@ A tag-based Resource Group lists every workshop resource in one place, which mak
 
    ![CREATE VPC](images/step2.2.png)
 
-3. Use the parameters below and add the standard tags:
+3. Use the parameters below:
 
    | Parameter | Value |
    | --- | --- |
@@ -83,6 +77,7 @@ A tag-based Resource Group lists every workshop resource in one place, which mak
    | IPv4 CIDR | `10.100.0.0/16` |
    | IPv6 CIDR block | No IPv6 CIDR block |
    | Tenancy | Default |
+   | Tag | `Project` = `Redwood-AWS-101` |
 
    ![VPC PARAMS](images/step2.3.png)
    ![VPC TAG + CREATE](images/step2.4.png)
@@ -110,7 +105,7 @@ This subnet hosts FortiGate's `port1` (Internet-facing).
 
    ![CREATE SUBNET](images/step3.1.png)
 
-2. Use the parameters below and add the standard tags:
+2. Use the parameters below:
 
    | Parameter | Value |
    | --- | --- |
@@ -118,6 +113,7 @@ This subnet hosts FortiGate's `port1` (Internet-facing).
    | Subnet name | `redwood-aws101-lab-subnet-public-1a` |
    | Availability Zone | `ca-central-1a` |
    | IPv4 subnet CIDR block | `10.100.1.0/24` |
+   | Tag | `Project` = `Redwood-AWS-101` |
 
    ![SUBNET PARAMS I](images/step3.2.png)
    ![SUBNET PARAMS II](images/step3.3.png)
@@ -149,7 +145,7 @@ Usable addresses: `10.100.1.4` to `10.100.1.254`.
 
 This subnet hosts FortiGate's `port2` and the protected workloads.
 
-1. Click **Create subnet** again, use the parameters below, and add the standard tags:
+1. Click **Create subnet** again and use the parameters below:
 
    | Parameter | Value |
    | --- | --- |
@@ -157,6 +153,7 @@ This subnet hosts FortiGate's `port2` and the protected workloads.
    | Subnet name | `redwood-aws101-lab-subnet-private-1a` |
    | Availability Zone | `ca-central-1a` |
    | IPv4 subnet CIDR block | `10.100.2.0/24` |
+   | Tag | `Project` = `Redwood-AWS-101` |
 
 2. Click **Create subnet**.
 
@@ -191,7 +188,12 @@ A VPC has no Internet access until an Internet Gateway (IGW) is attached **and**
 
    ![IGW](images/step5.1.png)
 
-2. Set **Name tag** to `redwood-aws101-lab-igw`, add the standard tags, and click **Create internet gateway**.
+2. Use the parameters below, then click **Create internet gateway**:
+
+   | Parameter | Value |
+   | --- | --- |
+   | Name tag | `redwood-aws101-lab-igw` |
+   | Tag | `Project` = `Redwood-AWS-101` |
 
    ![CREATE IGW](images/step5.2.png)
 
@@ -217,7 +219,7 @@ A subnet becomes "public" only when its route table has `0.0.0.0/0 → IGW`. For
    | --- | --- |
    | Name | `redwood-aws101-lab-rt-public` |
    | VPC | `redwood-aws101-lab-vpc` |
-   | Tags | standard tags |
+   | Tag | `Project` = `Redwood-AWS-101` |
 
    ![CREATE RT](images/step6.1.b.png)
 

@@ -21,7 +21,13 @@ Deploy a test VM (the application server) in the private subnet. Then configure 
 
 1. Open **EC2 → Instances → Launch instances**.
 
-2. **Name:** `redwood-aws101-lab-testvm`, with the standard tags.
+2. **Name and tags:** click **Add additional tags**:
+
+   | Parameter | Value |
+   | --- | --- |
+   | Name | `redwood-aws101-lab-testvm` |
+   | Tag | `Project` = `Redwood-AWS-101` |
+   | Resource types | **Instances, Volumes, Network interfaces** |
 
    ![TAGS](images/step1.2.png)
 
