@@ -2,66 +2,52 @@
 
 ## Fortinet Security Hands On Workshop | AWS Series
 
-### Welcome
+Deploy FortiGate in AWS to protect cloud workloads. You will build the AWS network, deploy and license a FortiGate-VM, steer traffic through it with route tables, configure inbound and outbound policies, and connect to on-premises with a site-to-site IPsec VPN.
 
-Organizations are rapidly adopting Amazon Web Services (AWS) to accelerate digital transformation, but this cloud migration introduces new security challenges. Extending consistent security policies from on-premises to the cloud while maintaining operational efficiency is critical. Many organizations struggle with fragmented security tools, rising costs from native cloud security services, and the complexity of securing hybrid environments. Without a unified approach, security teams face visibility gaps, manual processes, and difficulty maintaining compliance across their expanding attack surface.
+### Scenario: Redwood Industries
 
-In this workshop, participants will learn how to deploy FortiGate in AWS to protect their first cloud workloads. Using a realistic customer scenario, participants will build complete AWS networking infrastructure, deploy and license a FortiGate EC2 instance, configure security policies for north-south traffic inspection, and establish site-to-site IPsec VPN connectivity between AWS and on-premises environments.
+Redwood Industries is a 200-employee manufacturer. FortiGate already protects its headquarters (HQ) network (`192.168.0.0/22`), and Redwood is moving its first business applications to AWS. The security team has one rule: **no traffic reaches or leaves an AWS workload unless FortiGate inspects it**, with the same policies and logs as at HQ.
 
-At the heart of this solution is FortiGate as a Next-Generation Firewall (NGFW) in AWS, providing the same security capabilities and operational consistency that organizations rely on in their on-premises deployments. Participants will discover how to leverage AWS Route Tables to force traffic inspection, configure SNAT for internet access, and use FortiGate's IPsec VPN for hybrid connectivity instead of a managed AWS Site-to-Site VPN connection — keeping one security platform, one policy model, and one set of logs across on-premises and AWS, and avoiding the separate charges of AWS Network Firewall and managed VPN connections for this single-VPC design.
+You are the engineer building that environment. Each lab is one stage of the project.
 
-### Time Requirements
+<details>
+<summary><b>Why FortiGate on AWS?</b></summary>
 
-The estimated time to complete this workshop is 3 hours.
+- **One security platform:** the same policies, logs, and operations on-premises and in AWS
+- **Lower cost for this design:** a single-VPC design avoids separate charges for AWS Network Firewall and a managed Site-to-Site VPN
+- **Full NGFW:** IPS, application control, web filtering, and FortiGuard services, with visibility through logs and FortiView
+</details>
 
-### Target Audience
-
-- Cloud security engineers and architects
-- Network security professionals transitioning to cloud
-- Fortinet administrators expanding to AWS
-- IT professionals implementing enterprise security solutions
-- Security consultants and presales engineers
-- System administrators responsible for firewall management
-
-**Experience Level**: Intermediate to advanced professionals with networking fundamentals and basic AWS knowledge.
-
-### What You'll Learn
-
-- Deploy complete AWS networking infrastructure (VPC, subnets, Internet Gateway, route tables)
-- Configure FortiGate EC2 instance in AWS with BYOL licensing
-- Implement AWS Route Tables to force traffic through FortiGate for inspection
-- Disable Source/Destination check on FortiGate ENIs to enable transit
-- Create firewall policies with SNAT for secure internet access
-- Establish site-to-site IPsec VPN for hybrid connectivity
-- Use FortiGate logs and FortiView for traffic visibility and troubleshooting
-- Demonstrate cost savings and business value vs. AWS native security services
-
-### Reference Architecture
-
-After completing this workshop, you will have deployed the following architecture.
+**Duration:** ~3 hours, including clean-up (about 2h45 of hands-on time plus buffer)
+**Audience:** Network and security engineers with networking fundamentals and basic AWS knowledge.
 
 ![reference-architecture](aws-101-lab4/images/reference-architecture-final.png)
 
-## Laboratories
+## Labs
 
-This workshop is organized in sequential laboratories. One lab will build up on top of the previous module, so please, follow the order as proposed below.
+Complete the labs in order. Each one builds on the previous lab.
 
-Lab 1 - [AWS Infrastructure Foundation](/aws-101-lab1/README.md)  
-Lab 2 - [FortiGate EC2 Deployment & Traffic Steering](/aws-101-lab2/README.md)  
-Lab 3 - [Security Policies & Traffic Testing](/aws-101-lab3/README.md)  
-Lab 4 - [Site-to-Site VPN Configuration](/aws-101-lab4/README.md)
+| Lab | Stage | Time |
+| --- | --- | --- |
+| 1. [AWS Infrastructure Foundation](/aws-101-lab1/README.md) | Build the AWS landing zone network | ~25 min |
+| 2. [FortiGate VM Deployment & Traffic Steering](/aws-101-lab2/README.md) | Make FortiGate the only way in and out | ~60 min |
+| 3. [Security Policies & Traffic Testing](/aws-101-lab3/README.md) | Launch the first application server, then prove it is reachable and inspected | ~40 min |
+| 4. [Site-to-Site VPN Configuration](/aws-101-lab4/README.md) | Connect AWS to HQ | ~30 min |
+| [Clean-Up](/aws-101-lab4/README.md#clean-up) | Delete every resource so nothing keeps billing | ~10 min |
 
----
+## What You Need
 
-> [!NOTE]
-> The workshop provides examples and sample code as instructional content for you to consume. These examples will help you understand how to configure Fortinet Security Fabric and build a functional solution. **Please note that these examples are not suitable for use in production environments**.
+- An isolated sandbox AWS account with `AdministratorAccess`, with access to `ca-central-1`
+- An SSH client (OpenSSH, or PuTTY on Windows), an RDP client, and a modern browser
+- **From your instructor:**
+  - A FortiFlex token (Lab 2)
+  - Your own **HQ (on-premises) FortiGate**: its public IP and admin credentials (Lab 4)
+  - RDP credentials for the HQ Windows VM behind it (Lab 4)
 
 ---
 
 > [!CAUTION]
-> If you are using an AWS account linked to your production environment, it would be more prudent not to use your "root user" account or an admin role with broad production access. Although the lab is designed to function in "isolated" mode, a "human" error when creating certain resources such as VPC peering and route tables could impact your production environment. **We recommend using an isolated AWS account or a dedicated sandbox account under AWS Organizations**.
-
----
+> Use an isolated sandbox AWS account, not one connected to production. These examples are **not suitable for production**.
 
 > [!WARNING]
-> This lab uses several EC2 instances. The entire lab should stay under **15** instances. At the end of the day, it will be important to terminate everything or at least stop the instances if you don't want any unpleasant surprises on your AWS bill.
+> The workshop launches two EC2 instances in your account: the FortiGate-VM (`c5.large`) and a test VM (`t3.micro`). The HQ FortiGate is hosted by your instructor, not in your account. Stopped instances still incur EBS and Elastic IP charges. When you finish, follow the **Clean-Up** section at the end of [Lab 4](/aws-101-lab4/README.md).
