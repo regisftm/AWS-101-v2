@@ -18,8 +18,14 @@ You are the engineer building that environment. Each lab is one stage of the pro
 - **Full NGFW:** IPS, application control, web filtering, and FortiGuard services, with visibility through logs and FortiView
 </details>
 
-**Duration:** ~3 hours, including clean-up (about 2h45 of hands-on time plus buffer)
+---
+
+**Duration:** ~3 hours, including clean-up  
 **Audience:** Network and security engineers with networking fundamentals and basic AWS knowledge.
+
+## Reference Architecture
+
+By the end of the workshop, you will have built the following:
 
 ![reference-architecture](aws-101-lab4/images/reference-architecture-final.png)
 
