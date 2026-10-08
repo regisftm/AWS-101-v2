@@ -23,7 +23,7 @@ Along the way you'll see FortiGate's default behavior in action: anything you ha
 
 ## Step 1: Launch the Test EC2 Instance
 
-**Why:** You need a workload to protect. This small Ubuntu VM plays the role of Redwood's application server. You place it in the **private** subnet with **no public IP**, so it has no direct connection to the Internet. Its only path in or out is the private route table from Lab 2, which sends everything to FortiGate's `port2`. You also give it a fixed IP, `10.100.2.10`, because FortiGate's address object and VIPs will point at that address.
+You need a workload to protect. This small Ubuntu VM plays the role of Redwood's application server. You place it in the **private** subnet with **no public IP**, so it has no direct connection to the Internet. Its only path in or out is the private route table from Lab 2, which sends everything to FortiGate's `port2`. You also give it a fixed IP, `10.100.2.10`, because FortiGate's address object and VIPs will point at that address.
 
 1. **Start the launch wizard:**
    - Open the EC2 console. In the left navigation pane, choose **Instances**.
@@ -41,14 +41,14 @@ Along the way you'll see FortiGate's default behavior in action: anything you ha
      | Value | `Redwood-AWS-101` |
      | Resource types | **Instances, Volumes, Network interfaces** |
 
-   ![TAGS](images/step1.2.png)
+     ![TAGS](images/step1.2.png)
 
 3. **Choose the image (AMI):**
    - Under **Application and OS Images**, select the **Quick Start** tab, then **Ubuntu**.
    - In **Amazon Machine Image (AMI)**, select **Ubuntu Server 26.04 LTS (HVM), SSD Volume Type**.
    - Set **Architecture** to **64-bit (x86)**.
 
-   ![OS IMAGE](images/step1.3.png)
+     ![OS IMAGE](images/step1.3.png)
 
 4. **Instance type:**
    - Select `t3.micro` (2 vCPU, 1 GiB memory). A test server needs very little capacity.
@@ -77,8 +77,8 @@ Along the way you'll see FortiGate's default behavior in action: anything you ha
 
      | Type | Port range | Source type | Source | Description |
      | --- | --- | --- | --- | --- |
-     | SSH | 22 | Anywhere | `0.0.0.0/0` | SSH from the Internet, via FortiGate |
-     | HTTP | 80 | Anywhere | `0.0.0.0/0` | HTTP from the Internet, via FortiGate |
+     | SSH | 22 | Anywhere | `0.0.0.0/0` | SSH from the Internet to VM (via FortiGate) |
+     | HTTP | 80 | Anywhere | `0.0.0.0/0` | HTTP from the Internet to VM (via FortiGate) |
 
      ![SG](images/step1.6.b.png)
 
@@ -89,7 +89,7 @@ Along the way you'll see FortiGate's default behavior in action: anything you ha
    - Still in **Network settings**, expand **Advanced network configuration**.
    - Under **Network interface 1**, set **Primary IP** to `10.100.2.10`.
 
-   ![FIXED IP ADD](images/step1.7.png)
+     ![FIXED IP ADD](images/step1.7.png)
 
 8. **Storage:**
    - Keep the default 8 GiB `gp3` root volume.
@@ -100,9 +100,9 @@ Along the way you'll see FortiGate's default behavior in action: anything you ha
 
 10. **Launch:**
     - Choose **Launch instance**, then **View all instances**.
-    - Wait until **Instance state** shows **Running** and **Status check** shows **2/2 checks passed**.
+    - Wait until **Instance state** shows **Running** and **Status check** shows **3/3 checks passed**.
 
-    ![RUNNING INSTANCE](images/step1.10.png)
+      ![RUNNING INSTANCE](images/step1.10.png)
 
 > [!IMPORTANT]
 > The VM must have **no public IP**. If it has one, Internet traffic could reach it directly and bypass FortiGate, which defeats the purpose of this lab.
@@ -121,7 +121,7 @@ The test VM is running, but nobody can reach it: it has no public IP, and FortiG
 
 ## Step 2: Create the Address Object
 
-**Why:** FortiGate policies and VIPs refer to hosts and networks through named **address objects** rather than raw IPs. Defining the test VM once as `TESTVM-INTERNAL` makes every policy that uses it easier to read ("allow to TESTVM-INTERNAL" instead of "allow to 10.100.2.10/32"). If the VM's address ever changes, you update one object instead of every policy.
+FortiGate policies and VIPs refer to hosts and networks through named **address objects** rather than raw IPs. Defining the test VM once as `TESTVM-INTERNAL` makes every policy that uses it easier to read ("allow to TESTVM-INTERNAL" instead of "allow to 10.100.2.10/32"). If the VM's address ever changes, you update one object instead of every policy.
 
 1. **Log in to FortiGate:**
    - In your browser, go to `https://<FGT-EIP>` and log in as `admin` with the password you set in Lab 2.
@@ -136,6 +136,7 @@ The test VM is running, but nobody can reach it: it has no public IP, and FortiG
      | Type | **Subnet** |
      | IP/Netmask | `10.100.2.10/32` |
      | Interface | `port2` |
+     | Routing configuration | `disabled` |
 
      ![ADDRESS CONFIG](images/step2.2.png)
 
@@ -149,7 +150,7 @@ The test VM is running, but nobody can reach it: it has no public IP, and FortiG
 
 ## Step 3: Create the Virtual IPs
 
-**Why:** A Virtual IP (VIP) is FortiGate's **destination NAT**. It tells FortiGate: "when traffic arrives on this public IP and port, send it to this private IP and port." You create two VIPs that share FortiGate's Elastic IP:
+A Virtual IP (VIP) is FortiGate's **destination NAT**. It tells FortiGate: "when traffic arrives on this public IP and port, send it to this private IP and port." You create two VIPs that share FortiGate's Elastic IP:
 
 - Port `2222` → test VM port `22` (SSH)
 - Port `8080` → test VM port `80` (HTTP)
@@ -162,9 +163,11 @@ Using different external ports lets one public IP publish several services. Port
 On AWS, `port1` holds a private VPC address (`10.100.1.x`). The Internet Gateway translates the Elastic IP to that private address 1:1 before the packet reaches FortiGate, so FortiOS never sees the Elastic IP. Inbound packets arrive addressed to `port1`'s private IP. Setting the VIP's external IP to `0.0.0.0` tells FortiGate to match whatever address `port1` has.
 </details>
 
+---
+
 1. **Create the SSH VIP:**
    - Go to **Policy & Objects → Virtual IPs**.
-   - Choose **Create new → Virtual IP** and fill in:
+   - Choose **Virtual IP → +Create new** and fill in:
 
      | Parameter | Value |
      | --- | --- |
@@ -185,7 +188,7 @@ On AWS, `port1` holds a private VPC address (`10.100.1.x`). The Internet Gateway
    - Choose **OK**.
 
 2. **Create the HTTP VIP:**
-   - Choose **Create new → Virtual IP** again and fill in the same values, except:
+   - Choose **Virtual IP → +Create new** again and fill in the same values, except:
 
      | Parameter | Value |
      | --- | --- |
@@ -208,11 +211,11 @@ On AWS, `port1` holds a private VPC address (`10.100.1.x`). The Internet Gateway
 
 ## Step 4: Create the Virtual IP Group
 
-**Why:** A firewall policy's destination can be a single VIP or a group of VIPs. Grouping the SSH and HTTP VIPs means one inbound policy covers both services, instead of two nearly identical policies. When Redwood publishes another service on this server, you just add its VIP to the group.
+A firewall policy's destination can be a single VIP or a group of VIPs. Grouping the SSH and HTTP VIPs means one inbound policy covers both services, instead of two nearly identical policies. When Redwood publishes another service on this server, you just add its VIP to the group.
 
 1. **Create the group:**
    - Still in **Policy & Objects → Virtual IPs**, select the **Virtual IP Group** tab.
-   - Choose **Create new** and fill in:
+   - Choose **+Create new** and fill in:
 
      | Parameter | Value |
      | --- | --- |
@@ -233,7 +236,7 @@ On AWS, `port1` holds a private VPC address (`10.100.1.x`). The Internet Gateway
 
 ## Step 5: Create the Inbound Policy (port1 → port2)
 
-**Why:** The VIPs translate addresses, but they don't allow anything by themselves. FortiGate **denies all traffic by default**: every flow needs an explicit policy that accepts it. This policy allows traffic arriving from the Internet on `port1` to reach the published VIPs through `port2`, for the SSH and HTTP services only. Logging all sessions gives the security team its audit trail.
+The VIPs translate addresses, but they don't allow anything by themselves. FortiGate **denies all traffic by default**: every flow needs an explicit policy that accepts it. This policy allows traffic arriving from the Internet on `port1` to reach the published VIPs through `port2`, for the SSH and HTTP services only. Logging all sessions gives the security team its audit trail.
 
 1. **Create the policy:**
    - Go to **Policy & Objects → Firewall Policy**.
@@ -242,13 +245,13 @@ On AWS, `port1` holds a private VPC address (`10.100.1.x`). The Internet Gateway
      | Parameter | Value |
      | --- | --- |
      | Name | `testvm_access_vip` |
+     | Schedule | `always` |
+     | Action | **ACCEPT** |
      | Incoming interface | `port1` |
      | Outgoing interface | `port2` |
      | Source | `all` |
      | Destination | `TESTVM-INTERNAL-VIPGRP` |
-     | Schedule | `always` |
      | Service | `SSH`, `HTTP` |
-     | Action | **ACCEPT** |
      | **Firewall/Network Options** | |
      | NAT | **Disabled** |
      | **Logging Options** | |
@@ -263,7 +266,10 @@ On AWS, `port1` holds a private VPC address (`10.100.1.x`). The Internet Gateway
 
 - **NAT disabled:** the VIP already performs destination NAT. Leaving source NAT off means the test VM sees the real client IP, which keeps the VM's own logs accurate. It's also why the VM's security group allows `0.0.0.0/0`.
 - **Source `all`:** lets attendees connect from any network. In production, narrow the source to an office IP range or a jump host.
+
 </details>
+
+---
 
 **Check:**
 
@@ -274,7 +280,7 @@ On AWS, `port1` holds a private VPC address (`10.100.1.x`). The Internet Gateway
 
 ## Step 6: Test SSH Through the VIP
 
-**Why:** This proves the inbound path works end to end: your laptop → Elastic IP → Internet Gateway → FortiGate `port1` → VIP translation → policy check → `port2` → test VM. Once you're on the VM, you also confirm the other half of the story: the VM can't reach the Internet yet, because no policy allows outbound traffic.
+This proves the inbound path works end to end: your laptop → Elastic IP → Internet Gateway → FortiGate `port1` → VIP translation → policy check → `port2` → test VM. Once you're on the VM, you also confirm the other half of the story: the VM can't reach the Internet yet, because no policy allows outbound traffic.
 
 1. **SSH to the test VM through FortiGate:**
    - On **macOS, Linux, or WSL**, run:
@@ -331,7 +337,7 @@ Keep this SSH session open for the next steps.
 
 ## Step 7: Create the Outbound Policy (port2 → port1)
 
-**Why:** The application server needs Internet access for software updates, DNS, and API calls, but only through FortiGate. This policy allows traffic from the private side (`port2`) to the Internet (`port1`). It also enables **source NAT**, which is mandatory on AWS. The Internet Gateway only translates addresses that have a public IP associated with them. `port1`'s address has the Elastic IP, and the VM's `10.100.2.10` has none. FortiGate must therefore replace the VM's address with `port1`'s address before the packet leaves.
+The application server needs Internet access for software updates, DNS, and API calls, but only through FortiGate. The folllowing policy allows traffic from the private side (`port2`) to the Internet (`port1`). It also enables **source NAT**, which is mandatory on AWS. The Internet Gateway only translates addresses that have a public IP associated with them. `port1`'s address has the Elastic IP, and the VM's `10.100.2.10` has none. FortiGate must therefore replace the VM's address with `port1`'s address before the packet leaves.
 
 1. **Create the policy:**
    - Go to **Policy & Objects → Firewall Policy**.
@@ -340,13 +346,13 @@ Keep this SSH session open for the next steps.
      | Parameter | Value |
      | --- | --- |
      | Name | `internet_access` |
+     | Schedule | `always` |
+     | Action | **ACCEPT** |
      | Incoming interface | `port2` |
      | Outgoing interface | `port1` |
      | Source | `all` |
      | Destination | `all` |
-     | Schedule | `always` |
      | Service | `ALL` |
-     | Action | **ACCEPT** |
      | **Firewall/Network Options** | |
      | NAT | **Enabled** |
      | IP Pool Configuration | **Use Outgoing Interface Address** |
@@ -363,14 +369,12 @@ Keep this SSH session open for the next steps.
 <details>
 <summary><b>The full outbound NAT path</b></summary>
 
-```text
-Test VM 10.100.2.10 → port2 → FortiGate source NAT to 10.100.1.x (port1)
-  → Internet Gateway translates 10.100.1.x to the Elastic IP → Internet
-Replies: Elastic IP → Internet Gateway → port1 → FortiGate reverses the NAT → Test VM
-```
+![TRAFFIC FLOW](images/step7.flow.png)
 
 There are two NAT steps: FortiGate translates the VM's address to `port1`'s address, then the Internet Gateway translates `port1`'s address to the Elastic IP.
 </details>
+
+---
 
 **Check:**
 
@@ -381,7 +385,7 @@ There are two NAT steps: FortiGate translates the VM's address to `port1`'s addr
 
 ## Step 8: Test Outbound Access and Publish the Web Server
 
-**Why:** Now you repeat the tests that failed in Step 6, to prove the outbound policy works. You also confirm that the VM's traffic reaches the Internet from FortiGate's Elastic IP, not from any address of its own. With outbound access working, the server can finally install its web server. That lets you test the second inbound service, HTTP on port `8080`.
+Now you repeat the tests that failed in Step 6, to prove the outbound policy works. You also confirm that the VM's traffic reaches the Internet from FortiGate's Elastic IP, not from any address of its own. With outbound access working, the server can finally install its web server. That lets you test the second inbound service, HTTP on port `8080`.
 
 1. **Repeat the outbound tests** in your SSH session on the test VM:
 
@@ -428,13 +432,13 @@ The traffic works. Now you show the security team the evidence: every session yo
 
 ## Step 9: Review the Forward Traffic Logs
 
-**Why:** Working connectivity alone doesn't prove inspection. The Forward Traffic log records every session FortiGate forwarded: which policy allowed it, which interfaces it used, and how it was translated. This is the audit trail the security team asked for.
+Working connectivity alone doesn't prove inspection. The Forward Traffic log records every session FortiGate forwarded: which policy allowed it, which interfaces it used, and how it was translated. This is the audit trail the security team asked for.
 
 1. **Open the log:**
    - In the FortiGate GUI, go to **Log & Report → Forward Traffic**.
    - You'll see the sessions from Steps 6 and 8.
 
-   ![TRAFFIC LOG](images/step9.1.png)
+     ![TRAFFIC LOG](images/step9.1.png)
 
 2. **Inspect an outbound session:**
    - Select a session with source `10.100.2.10` and open its details. Confirm:
@@ -448,7 +452,7 @@ The traffic works. Now you show the security team the evidence: every session yo
      | NAT / Source NAT IP | `10.100.1.x` (FortiGate's `port1`) |
      | Action | `accept` |
 
-   ![LOG DETAILS](images/step9.2.png)
+     ![LOG DETAILS](images/step9.2.png)
 
 3. **Inspect an inbound session:**
    - Find a session for your SSH or HTTP connection. It shows policy `testvm_access_vip`, interfaces `port1` → `port2`, and your workstation's public IP as the source.
@@ -468,7 +472,7 @@ The traffic works. Now you show the security team the evidence: every session yo
 
 ## Step 10: Explore FortiView
 
-**Why:** Logs show individual sessions, while FortiView shows the big picture: who is talking to whom, how much, and through which policies. It needs no configuration, because it reads the same log data. It's the dashboard a security team would use to spot unusual behavior from a workload.
+Logs show individual sessions, while FortiView shows the big picture: who is talking to whom, how much, and through which policies. It needs no configuration, because it reads the same log data. It's the dashboard a security team would use to spot unusual behavior from a workload.
 
 1. **Open FortiView Sources:**
    - Go to **Dashboard → FortiView Sources**.

@@ -528,10 +528,12 @@ This route table is what makes FortiGate the inspection point. Its default route
 - [x] Each subnet has its own route table, and neither uses the Main route table.
 
 <details>
+
 <summary><b>Production considerations</b></summary>
 
 - **Availability:** a single FortiGate in one Availability Zone is a single point of failure for everything behind it. Production designs use FortiGate FGCP active-passive HA across two AZs (AWS-102), or a FortiGate fleet behind a Gateway Load Balancer.
 - **Sizing:** choose the instance type based on the throughput you need to inspect with your security profiles enabled. Check Fortinet's list of supported instance types.
+
 </details>
 
 ---
