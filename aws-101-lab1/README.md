@@ -79,7 +79,10 @@ Real deployments usually add more tags, such as `Environment` and `Owner`, for c
 
    ![RG CREATED](images/step1.4.png)
 
-**Check:** `redwood-aws101-lab-rg` appears under **Saved Resource Groups**. It is empty for now. It fills up automatically as you create tagged resources.
+**Check:**
+
+- [x] `redwood-aws101-lab-rg` appears under **Saved Resource Groups**.
+- [x] The group is empty for now. It fills up automatically as you create tagged resources.
 
 ---
 
@@ -116,7 +119,7 @@ A Virtual Private Cloud (VPC) is Redwood's own isolated network inside AWS, the 
    > Choose **VPC only**, not **VPC and more**. The "VPC and more" option creates subnets, route tables, and gateways automatically. You'll build each of them yourself in the next steps, so you understand exactly what each one does.
 
 4. **Add the tag and create the VPC:**
-   - Under **Tags**, the `Name` tag is already filled in. Choose **Add new tag** and enter.
+   - Under **Tags**, the `Name` tag is already filled in. Choose **Add new tag** and enter:
 
      | **Tags** | |
      | --- | --- |
@@ -131,7 +134,10 @@ A Virtual Private Cloud (VPC) is Redwood's own isolated network inside AWS, the 
 
    ![VPC INFORMATION](images/step2.6.png)
 
-**Check:** the VPC `redwood-aws101-lab-vpc` shows **State: Available** and **IPv4 CIDR: `10.100.0.0/16`**.
+**Check:**
+
+- [x] The VPC `redwood-aws101-lab-vpc` shows **State: Available**.
+- [x] **IPv4 CIDR** shows `10.100.0.0/16`.
 
 <details>
 <summary><b>Why <code>10.100.0.0/16</code>?</b></summary>
@@ -177,7 +183,11 @@ A subnet is a slice of the VPC's address range that lives in one Availability Zo
 > [!IMPORTANT]
 > Both subnets must be in the same Availability Zone, `ca-central-1a`. FortiGate has an interface in each subnet, and AWS only lets an instance use network interfaces in its own Availability Zone.
 
-**Check:** `redwood-aws101-lab-subnet-public-1a` appears in the subnet list with CIDR `10.100.1.0/24`, AZ `ca-central-1a`, and **251** available IPv4 addresses.
+**Check:**
+
+- [x] `redwood-aws101-lab-subnet-public-1a` appears in the subnet list.
+- [x] Its CIDR is `10.100.1.0/24` and its AZ is `ca-central-1a`.
+- [x] It shows **251** available IPv4 addresses.
 
 <details>
 <summary><b>Why 251 available addresses and not 256?</b></summary>
@@ -220,7 +230,10 @@ This is the protected side of the design. It will hold FortiGate's `port2` and t
 
    ![SUBNETS](images/step4.3.png)
 
-**Check:** two subnets now appear in `redwood-aws101-lab-vpc`: the public one (`10.100.1.0/24`) and the private one (`10.100.2.0/24`), both in `ca-central-1a`.
+**Check:**
+
+- [x] Two subnets appear in `redwood-aws101-lab-vpc`: the public one (`10.100.1.0/24`) and the private one (`10.100.2.0/24`).
+- [x] Both subnets are in `ca-central-1a`.
 
 Here is how traffic will flow once FortiGate is in place (Lab 2):
 
@@ -278,7 +291,10 @@ A new VPC is completely isolated: nothing inside it can reach the Internet, and 
 
      ![ATTACH IGW TO VPC](images/step5.3.b.png)
 
-**Check:** `redwood-aws101-lab-igw` shows **State: Attached**, and its **VPC ID** column shows `redwood-aws101-lab-vpc`.
+**Check:**
+
+- [x] `redwood-aws101-lab-igw` shows **State: Attached**.
+- [x] Its **VPC ID** column shows `redwood-aws101-lab-vpc`.
 
 > [!NOTE]
 > Attaching the IGW doesn't give any subnet Internet access yet. A subnet only uses the IGW when its route table has a route pointing to it. You create that route in the next step.
@@ -339,7 +355,10 @@ Every subnet uses a route table to decide where to send traffic. A subnet become
 
      ![SAVE ASSOCIATIONS](images/step6.3.b.png)
 
-**Check:** `redwood-aws101-lab-rt-public` has two routes (`10.100.0.0/16 → local` and `0.0.0.0/0 → redwood-aws101-lab-igw`), and `redwood-aws101-lab-subnet-public-1a` is listed under **Subnet associations**.
+**Check:**
+
+- [x] `redwood-aws101-lab-rt-public` has two routes: `10.100.0.0/16 → local` and `0.0.0.0/0 → redwood-aws101-lab-igw`.
+- [x] `redwood-aws101-lab-subnet-public-1a` is listed under **Subnet associations**.
 
 ---
 

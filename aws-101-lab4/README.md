@@ -102,7 +102,11 @@ The two sides of the tunnel mirror each other: each side's "local" network is th
 
 No other AWS change is needed. Security groups allow all outbound traffic by default, so the AWS FortiGate can already reach the HQ FortiGate.
 
-**Check:** `redwood-aws101-lab-fgt-sg` has two new inbound rules, UDP 500 and UDP 4500, both with source `<on-prem-public-ip>/32`.
+**Check:**
+
+- [x] `redwood-aws101-lab-fgt-sg` has a new inbound rule for UDP 500.
+- [x] It has a new inbound rule for UDP 4500.
+- [x] Both rules have the source `<on-prem-public-ip>/32`.
 
 ---
 
@@ -129,6 +133,7 @@ No other AWS change is needed. Security groups allow all outbound traffic by def
 
    | Parameter | Value |
    | --- | --- |
+   | **VPN Tunnel** | |
    | Authentication method | **Pre-shared Key** |
    | Pre-shared Key | `RedwoodIndustries2026!` |
    | IKE | **Version 2** |
@@ -147,6 +152,7 @@ No other AWS change is needed. Security groups allow all outbound traffic by def
 
    | Parameter | Value |
    | --- | --- |
+   | **Remote Site** | |
    | Remote site device type | **Fortinet** (select the Fortinet logo) |
    | Remote site device | **Accessible and static** |
    | IP/FQDN | `<FGT-EIP>` |
@@ -161,6 +167,7 @@ No other AWS change is needed. Security groups allow all outbound traffic by def
 
    | Parameter | Value |
    | --- | --- |
+   | **Local Site** | |
    | Outgoing interface that binds to tunnel | `port1` |
    | Create and add interface to zone | **Off** |
    | Local site | `port2` |
@@ -195,7 +202,10 @@ No other AWS change is needed. Security groups allow all outbound traffic by def
 In production, review the auto-created policies and narrow their sources, destinations, and services. By default they allow any traffic between the two networks.
 </details>
 
-**Check:** `to_aws` exists on the HQ FortiGate (still down), with its route and two policies.
+**Check:**
+
+- [x] `to_aws` exists on the HQ FortiGate (still down).
+- [x] The route to `10.100.0.0/16` and the two VPN policies exist.
 
 ---
 
@@ -220,6 +230,7 @@ In production, review the auto-created policies and narrow their sources, destin
 
    | Parameter | Value |
    | --- | --- |
+   | **VPN Tunnel** | |
    | Authentication method | **Pre-shared Key** |
    | Pre-shared Key | `RedwoodIndustries2026!` |
    | IKE | **Version 2** |
@@ -233,6 +244,7 @@ In production, review the auto-created policies and narrow their sources, destin
 
    | Parameter | Value |
    | --- | --- |
+   | **Remote Site** | |
    | Remote site device type | **Fortinet** (select the Fortinet logo) |
    | Remote site device | **Accessible and static** |
    | IP/FQDN | `<on-prem-public-ip>` |
@@ -245,6 +257,7 @@ In production, review the auto-created policies and narrow their sources, destin
 
    | Parameter | Value |
    | --- | --- |
+   | **Local Site** | |
    | Outgoing interface that binds to tunnel | `port1` |
    | Create and add interface to zone | **Off** |
    | Local site | `port2` |
@@ -265,7 +278,10 @@ In production, review the auto-created policies and narrow their sources, destin
 
    ![VERIFICATION](images/step4.7.png)
 
-**Check:** `to_on_prem` exists on the AWS FortiGate, with its route and two policies, and its status is **Up**.
+**Check:**
+
+- [x] `to_on_prem` exists on the AWS FortiGate, with status **Up**.
+- [x] The route to `192.168.0.0/22` and the two VPN policies exist.
 
 ---
 
@@ -295,7 +311,10 @@ In production, review the auto-created policies and narrow their sources, destin
    - The first command shows the IKE (Phase 1) session as **established**.
    - The second shows the Phase 2 tunnel with `10.100.0.0/16 ↔ 192.168.0.0/22`, and packet counters that will increase in Step 5.
 
-**Check:** both tunnels are **Up** on both FortiGates.
+**Check:**
+
+- [x] `to_on_prem` is **Up** on the AWS FortiGate.
+- [x] `to_aws` is **Up** on the HQ FortiGate.
 
 > [!TIP]
 > If a tunnel is still down after 60–90 seconds, the usual causes are a pre-shared key typo, a security group source that doesn't match the HQ public IP, or NAT-T disabled on one side. See [Troubleshooting](#troubleshooting).
@@ -357,7 +376,10 @@ In production, review the auto-created policies and narrow their sources, destin
 
 3. **Optional:** on either FortiGate, go to **Log & Report → Forward Traffic**. The cross-site sessions show the tunnel interface (`to_on_prem` or `to_aws`) and the VPN policies created by the wizard.
 
-**Check:** `Test-NetConnection` returns `TcpTestSucceeded : True`, and `nc` reports `succeeded!`.
+**Check:**
+
+- [x] `Test-NetConnection` returns `TcpTestSucceeded : True`.
+- [x] `nc` reports `succeeded!`.
 
 <details>
 <summary><b>Why no AWS route change was needed</b></summary>

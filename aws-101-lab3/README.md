@@ -34,8 +34,11 @@ Along the way you'll see FortiGate's default behavior in action: anything you ha
 
      | Parameter | Value |
      | --- | --- |
+     | **Name and tags** | |
      | Name | `redwood-aws101-lab-testvm` |
-     | Tag | `Project` = `Redwood-AWS-101` |
+     | **Additional tags** | |
+     | Key | `Project` |
+     | Value | `Redwood-AWS-101` |
      | Resource types | **Instances, Volumes, Network interfaces** |
 
    ![TAGS](images/step1.2.png)
@@ -59,10 +62,12 @@ Along the way you'll see FortiGate's default behavior in action: anything you ha
 
      | Parameter | Value |
      | --- | --- |
+     | **Network settings** | |
      | VPC | `redwood-aws101-lab-vpc` |
      | Subnet | `redwood-aws101-lab-subnet-private-1a` |
      | Auto-assign public IP | **Disable** |
-     | Firewall (security groups) | **Create security group** |
+     | **Firewall (security groups)** | |
+     | Security group | **Create security group** |
      | Security group name | `redwood-aws101-lab-testvm-sg` |
      | Description | `Workload access - reachable only via FortiGate VIPs` |
 
@@ -102,7 +107,11 @@ Along the way you'll see FortiGate's default behavior in action: anything you ha
 > [!IMPORTANT]
 > The VM must have **no public IP**. If it has one, Internet traffic could reach it directly and bypass FortiGate, which defeats the purpose of this lab.
 
-**Check:** on the instance's **Networking** tab, the private IP is `10.100.2.10`, the subnet is `redwood-aws101-lab-subnet-private-1a`, and there is no public IPv4 address.
+**Check:**
+
+- [x] On the instance's **Networking** tab, the private IP is `10.100.2.10`.
+- [x] The subnet is `redwood-aws101-lab-subnet-private-1a`.
+- [x] There is no public IPv4 address.
 
 ---
 
@@ -132,7 +141,9 @@ The test VM is running, but nobody can reach it: it has no public IP, and FortiG
 
    - Choose **OK**.
 
-**Check:** `TESTVM-INTERNAL` appears in the address list with the value `10.100.2.10/32`.
+**Check:**
+
+- [x] `TESTVM-INTERNAL` appears in the address list with the value `10.100.2.10/32`.
 
 ---
 
@@ -158,11 +169,12 @@ On AWS, `port1` holds a private VPC address (`10.100.1.x`). The Internet Gateway
      | Parameter | Value |
      | --- | --- |
      | Name | `TESTVM-INTERNAL-VIP-SSH` |
+     | **Network** | |
      | Interface | `port1` |
      | Type | **Static NAT** |
      | External IP address/range | `0.0.0.0` |
      | Map to IPv4 address/range | `TESTVM-INTERNAL` (start typing and select it) |
-     | Port Forwarding | **Enabled** |
+     | **Port Forwarding** | **Enabled** |
      | Protocol | **TCP** |
      | Port Mapping Type | **One to one** |
      | External service port | `2222` |
@@ -178,12 +190,17 @@ On AWS, `port1` holds a private VPC address (`10.100.1.x`). The Internet Gateway
      | Parameter | Value |
      | --- | --- |
      | Name | `TESTVM-INTERNAL-VIP-HTTP` |
+     | **Port Forwarding** | |
      | External service port | `8080` |
      | Map to IPv4 port | `80` |
 
    - Choose **OK**.
 
-**Check:** both VIPs appear in the list on interface `port1`: `0.0.0.0:2222 → 10.100.2.10:22` and `0.0.0.0:8080 → 10.100.2.10:80`.
+**Check:**
+
+- [x] Both VIPs appear in the list on interface `port1`.
+- [x] `TESTVM-INTERNAL-VIP-SSH` maps `0.0.0.0:2222 → 10.100.2.10:22`.
+- [x] `TESTVM-INTERNAL-VIP-HTTP` maps `0.0.0.0:8080 → 10.100.2.10:80`.
 
 ![VALIDATION](images/step3.valid.png)
 
@@ -207,7 +224,10 @@ On AWS, `port1` holds a private VPC address (`10.100.1.x`). The Internet Gateway
 
    - Choose **OK**.
 
-**Check:** `TESTVM-INTERNAL-VIPGRP` appears in the **Virtual IP Group** tab, with both VIPs as members.
+**Check:**
+
+- [x] `TESTVM-INTERNAL-VIPGRP` appears in the **Virtual IP Group** tab.
+- [x] Both VIPs are listed as members.
 
 ---
 
@@ -229,7 +249,9 @@ On AWS, `port1` holds a private VPC address (`10.100.1.x`). The Internet Gateway
      | Schedule | `always` |
      | Service | `SSH`, `HTTP` |
      | Action | **ACCEPT** |
+     | **Firewall/Network Options** | |
      | NAT | **Disabled** |
+     | **Logging Options** | |
      | Log allowed traffic | **All sessions** |
 
      ![FIREWALL POLICY CREATE](images/step5.1.png)
@@ -243,7 +265,10 @@ On AWS, `port1` holds a private VPC address (`10.100.1.x`). The Internet Gateway
 - **Source `all`:** lets attendees connect from any network. In production, narrow the source to an office IP range or a jump host.
 </details>
 
-**Check:** `testvm_access_vip` appears in the policy list as enabled, from `port1` to `port2`.
+**Check:**
+
+- [x] `testvm_access_vip` appears in the policy list as enabled.
+- [x] It goes from `port1` to `port2`.
 
 ---
 
@@ -294,7 +319,11 @@ On AWS, `port1` holds a private VPC address (`10.100.1.x`). The Internet Gateway
 
 Keep this SSH session open for the next steps.
 
-**Check:** SSH through `<FGT-EIP>:2222` works, `ping 10.100.2.4` succeeds, and both `ping 8.8.8.8` and `apt update` fail.
+**Check:**
+
+- [x] SSH through `<FGT-EIP>:2222` works.
+- [x] `ping 10.100.2.4` succeeds.
+- [x] `ping 8.8.8.8` and `sudo apt update` both fail.
 
 ---
 
@@ -318,8 +347,10 @@ Keep this SSH session open for the next steps.
      | Schedule | `always` |
      | Service | `ALL` |
      | Action | **ACCEPT** |
+     | **Firewall/Network Options** | |
      | NAT | **Enabled** |
      | IP Pool Configuration | **Use Outgoing Interface Address** |
+     | **Logging Options** | |
      | Log allowed traffic | **All sessions** |
 
      ![INTERNET ACCESS](images/step7.1.png)
@@ -341,7 +372,10 @@ Replies: Elastic IP → Internet Gateway → port1 → FortiGate reverses the NA
 There are two NAT steps: FortiGate translates the VM's address to `port1`'s address, then the Internet Gateway translates `port1`'s address to the Elastic IP.
 </details>
 
-**Check:** `internet_access` appears in the policy list as enabled, from `port2` to `port1`, with NAT enabled.
+**Check:**
+
+- [x] `internet_access` appears in the policy list as enabled.
+- [x] It goes from `port2` to `port1`, with NAT enabled.
 
 ---
 
@@ -380,7 +414,11 @@ There are two NAT steps: FortiGate translates the VM's address to `port1`'s addr
 
 The application server is now published and protected in both directions, and FortiGate inspected every step.
 
-**Check:** all outbound tests succeed, `ifconfig.me` returns `<FGT-EIP>`, and `http://<FGT-EIP>:8080` returns the nginx page.
+**Check:**
+
+- [x] All outbound tests succeed.
+- [x] `curl -s https://ifconfig.me` returns `<FGT-EIP>`.
+- [x] `http://<FGT-EIP>:8080` returns the nginx page.
 
 ---
 
@@ -421,7 +459,10 @@ The traffic works. Now you show the security team the evidence: every session yo
 > [!TIP]
 > Local logs are lost if the FortiGate instance is replaced. In production, send logs off-box to FortiAnalyzer or a SIEM.
 
-**Check:** you can find both an `internet_access` session (outbound) and a `testvm_access_vip` session (inbound) for the test VM.
+**Check:**
+
+- [x] You can find an `internet_access` session (outbound) for the test VM.
+- [x] You can find a `testvm_access_vip` session (inbound) for the test VM.
 
 ---
 
@@ -441,7 +482,10 @@ The traffic works. Now you show the security team the evidence: every session yo
 
    ![DRILL DOWN](images/step10.3.png)
 
-**Check:** FortiView lists `10.100.2.10` as a source, with the destinations from your tests.
+**Check:**
+
+- [x] FortiView lists `10.100.2.10` as a source.
+- [x] Its destinations include the hosts from your tests.
 
 ---
 

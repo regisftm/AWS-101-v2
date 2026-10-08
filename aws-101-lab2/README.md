@@ -19,7 +19,7 @@ In this lab you turn the empty network from Lab 1 into an inspected network:
 
 ## Step 1: Subscribe to the FortiGate-VM AMI
 
-**Why:** FortiGate-VM is sold through AWS Marketplace. Before your account can launch it, you must subscribe to the listing and accept Fortinet's license agreement (EULA). This is a one-time action per AWS account. You subscribe to the **BYOL** (Bring Your Own License) listing because you'll license FortiGate with your own FortiFlex token. The PAYG listing would bill the license hourly through AWS instead.
+FortiGate-VM is sold through AWS Marketplace. Before your account can launch it, you must subscribe to the listing and accept Fortinet's license agreement (EULA). This is a one-time action per AWS account. You subscribe to the **BYOL** (Bring Your Own License) listing because you'll license FortiGate with your own FortiFlex token. The PAYG listing would bill the license hourly through AWS instead.
 
 1. **Open AWS Marketplace:**
    - In the search bar, type `Marketplace` and choose **AWS Marketplace**.
@@ -31,14 +31,11 @@ In this lab you turn the empty network from Lab 1 into an inspected network:
    - In the left navigation pane, choose **Discover products**.
    - In the search box, type `Fortinet FortiGate Next-Generation Firewall` and press **Enter**.
 
-   ![DISCOVER](images/step1.2.png)
-
 3. **Select the BYOL listing:**
    - Choose the listing published by **Fortinet, Inc.** that does **not** have "(PAYG)" in its title. That is the BYOL listing.
    - If the listing offers more than one architecture, use **x86_64**. It matches the `c5.large` instance type you launch in Step 3.
 
    ![RIGHT PRODUCT](images/step1.3.png)
-<!-- TODO: verify current Marketplace listing titles and architectures against the current AWS Marketplace -->
 
 4. **Subscribe:**
    - Choose **View purchase options**.
@@ -48,15 +45,17 @@ In this lab you turn the empty network from Lab 1 into an inspected network:
 
 5. **Don't launch from Marketplace.** The next page offers to continue to configuration and launch. Close it instead. You'll launch FortiGate from the EC2 console in Step 3, which gives you full control over the network settings.
 
-**Check:** in **AWS Marketplace → Manage subscriptions**, the FortiGate listing appears under **Active subscriptions**.
+   **Check:**
 
-![VALIDATION](images/step1.validation.png)
+   - [x] In **AWS Marketplace → Manage subscriptions**, the FortiGate listing appears under **Active subscriptions**.
+
+   ![VALIDATION](images/step1.validation.png)
 
 ---
 
 ## Step 2: Create the EC2 Key Pair
 
-**Why:** AWS requires a key pair to launch an instance. In this workshop you use it to SSH into the test VM in Lab 3. AWS keeps the public half and gives you the private half as a file. The private key can be downloaded **only once**, at creation time. If you lose it, you must create a new key pair.
+AWS requires a key pair to launch an instance. In this workshop you use it to SSH into the test VM in Lab 3. AWS keeps the public half and gives you the private half as a file. The private key can be downloaded **only once**, at creation time. If you lose it, you must create a new key pair.
 
 1. **Open Key Pairs:**
    - In the search bar, type `EC2` and choose **EC2**.
@@ -69,10 +68,13 @@ In this lab you turn the empty network from Lab 1 into an inspected network:
 
    | Parameter | Value |
    | --- | --- |
+   | **Key pair** | |
    | Name | `redwood-aws101-lab-kp` |
    | Key pair type | **RSA** |
    | Private key file format | **.pem** (macOS, Linux, WSL, or Windows OpenSSH) or **.ppk** (PuTTY) |
-   | Tag | `Project` = `Redwood-AWS-101` |
+   | **Tags - *optional*** | |
+   | Key | `Project` |
+   | Value - *optional* | `Redwood-AWS-101` |
 
    - Choose **Create key pair**. Your browser downloads `redwood-aws101-lab-kp.pem` (or `.ppk`) immediately.
 
@@ -88,16 +90,19 @@ In this lab you turn the empty network from Lab 1 into an inspected network:
      ```
 
    - On **Windows with PuTTY**, save the `.ppk` file in a folder you'll remember, for example `C:\Users\<you>\Documents\AWS-101\`.
+   
+**Check:**
 
-   ![VERIFICATION](images/step2.4.png)
+- [x] `redwood-aws101-lab-kp` appears in **EC2 → Key Pairs**.
+- [x] The private key file is saved on your computer.
 
-**Check:** `redwood-aws101-lab-kp` appears in **EC2 → Key Pairs**, and the private key file is saved on your computer.
+![VERIFICATION](images/step2.4.png)
 
 ---
 
 ## Step 3: Launch the FortiGate EC2 Instance
 
-**Why:** This creates the FortiGate itself. The instance launches with one network interface, which becomes `port1` in the public subnet. You add `port2` later, in Steps 5 and 6. In this step you also create the security group, the AWS-level firewall in front of FortiGate's interfaces. It decides which traffic AWS lets reach FortiGate at all.
+This creates the FortiGate itself. The instance launches with one network interface, which becomes `port1` in the public subnet. You add `port2` later, in Steps 5 and 6. In this step you also create the security group, the AWS-level "firewall" in front of FortiGate's interfaces. It decides which traffic AWS lets reach FortiGate at all.
 
 1. **Start the launch wizard:**
    - In the EC2 console's left navigation pane, choose **Instances**.
@@ -110,8 +115,11 @@ In this lab you turn the empty network from Lab 1 into an inspected network:
 
      | Parameter | Value |
      | --- | --- |
+     | **Name and tags** | |
      | Name | `redwood-aws101-lab-fgt` |
-     | Tag | `Project` = `Redwood-AWS-101` |
+     | **Additional tags** | |
+     | Key | `Project` |
+     | Value | `Redwood-AWS-101` |
      | Resource types | **Instances, Volumes, Network interfaces** |
 
    - Applying the tag to volumes and network interfaces means the disks and `port1` are tagged too.
@@ -131,18 +139,20 @@ In this lab you turn the empty network from Lab 1 into an inspected network:
    ![INSTANCE TYPE](images/step3.4.png)
 <!-- TODO: verify against the current FortiGate-VM on AWS supported instance types list -->
 
-5. **Key pair:**
+1. **Key pair:**
    - In **Key pair name**, select `redwood-aws101-lab-kp`.
 
-6. **Network settings:**
+2. **Network settings:**
    - Choose **Edit** in the **Network settings** panel and fill in:
 
      | Parameter | Value |
      | --- | --- |
+     | **Network settings** | |
      | VPC | `redwood-aws101-lab-vpc` |
      | Subnet | `redwood-aws101-lab-subnet-public-1a` |
      | Auto-assign public IP | **Disable** |
-     | Firewall (security groups) | **Create security group** |
+     | **Firewall (security groups)** | |
+     | Security group | **Create security group** |
      | Security group name | `redwood-aws101-lab-fgt-sg` |
      | Description | `Management and inspection access for redwood-aws101-lab-fgt` |
 
@@ -156,7 +166,7 @@ In this lab you turn the empty network from Lab 1 into an inspected network:
      | HTTPS | 443 | My IP | (filled in automatically) | FortiGate GUI |
      | Custom TCP | 2222 | Anywhere | `0.0.0.0/0` | Inbound SSH to the test VM |
      | Custom TCP | 8080 | Anywhere | `0.0.0.0/0` | Inbound HTTP to the test VM |
-     | All traffic | All | Custom | `10.100.0.0/16` | Traffic from the VPC |
+     | All traffic | All | Custom | `10.100.0.0/16` | Traffic from VPC |
 
      ![SG GROUP CONFIG I](images/step3.6.b.gif)
      ![SG GROUP CONFIG II](images/step3.6.d.png)
@@ -174,34 +184,38 @@ In this lab you turn the empty network from Lab 1 into an inspected network:
    In production, use a separate security group for each interface role (Internet-facing and internal), and limit management access to a trusted admin network.
    </details>
 
-7. **Storage:**
+3. **Storage:**
    - The FortiGate AMI provides two volumes: a 2 GiB root volume and a 30 GiB log volume (`/dev/sdb`). Confirm both are listed. Add the log volume only if it's missing.
      <!-- TODO: verify the default block-device mapping of the current FortiGate BYOL AMI -->
 
-8. **Instance metadata:**
+4. **Instance metadata:**
    - Expand **Advanced details** and set **Metadata version** to **V2 only (token required)**.
    - This enforces IMDSv2, which protects the instance's AWS credentials from SSRF-style attacks.
      <!-- TODO: verify IMDSv2-only support for the FortiOS version in use -->
 
-9. **Launch:**
+5. **Launch:**
    - In the **Summary** panel on the right, confirm **Number of instances** is `1`.
    - Choose **Launch instance**.
 
    ![LAUNCH INSTANCE](images/step3.8.png)
 
-10. **Wait for the instance to start:**
+6. **Wait for the instance to start:**
     - Choose **View all instances**.
     - Wait until **Instance state** shows **Running** and **Status check** shows **3/3 checks passed**. This takes 2–4 minutes. Use the refresh button to update the view.
 
     ![RUNNING](images/step3.9.png)
 
-**Check:** `redwood-aws101-lab-fgt` is **Running** with **3/3 checks passed**. On its **Networking** tab, the interface is in `redwood-aws101-lab-subnet-public-1a`, and there is no public IPv4 address yet.
+**Check:**
+
+- [x] `redwood-aws101-lab-fgt` is **Running** with **3/3 checks passed**.
+- [x] On its **Networking** tab, the interface is in `redwood-aws101-lab-subnet-public-1a`.
+- [x] There is no public IPv4 address yet.
 
 ---
 
 ## Step 4: Allocate an Elastic IP for `port1`
 
-**Why:** FortiGate needs a public address that never changes. Your browser uses it to reach the GUI, Internet users use it to reach the Lab 3 VIPs, and the HQ FortiGate uses it as the VPN peer in Lab 4. An **Elastic IP** is a public IPv4 address that belongs to your account until you release it. It stays the same across stops, starts, and reboots.
+FortiGate needs a public address that never changes. Your browser uses it to reach the GUI, Internet users use it to reach the Lab 3 VIPs, and the HQ FortiGate uses it as the VPN peer in Lab 4. An **Elastic IP** is a public IPv4 address that belongs to your account until you release it. It stays the same across stops, starts, and reboots.
 
 1. **Allocate the Elastic IP:**
    - In the EC2 console's left navigation pane, under **Network & Security**, choose **Elastic IPs**.
@@ -213,10 +227,16 @@ In this lab you turn the empty network from Lab 1 into an inspected network:
 
      | Parameter | Value |
      | --- | --- |
-     | Public IPv4 address pool | **Amazon's pool of IPv4 addresses** |
+     | **Elastic IP address settings** | |
      | Network border group | `ca-central-1` |
-     | Tag | `Name` = `redwood-aws101-lab-fgt-eip` |
-     | Tag | `Project` = `Redwood-AWS-101` |
+     | Public IPv4 address pool | **Amazon's pool of IPv4 addresses** |
+     | **Tags - *optional*** | |
+     | Key | `Name` |
+     | Value - *optional* | `redwood-aws101-lab-fgt-eip` |
+     | Key | `Project` |
+     | Value - *optional* | `Redwood-AWS-101` |
+
+   - Choose **Add new tag** to add the second tag.
 
    - Choose **Allocate**.
 
@@ -232,9 +252,11 @@ In this lab you turn the empty network from Lab 1 into an inspected network:
 
      | Parameter | Value |
      | --- | --- |
+     | **Resource type** | |
      | Resource type | **Network interface** |
      | Network interface | The primary interface of `redwood-aws101-lab-fgt` (its description starts with "Primary network interface") |
      | Private IP address | The only address listed (a `10.100.1.x` address) |
+     | **Reassociation** | |
      | Allow this Elastic IP address to be reassociated | Leave unchecked |
 
    - Choose **Associate**.
@@ -246,13 +268,16 @@ In this lab you turn the empty network from Lab 1 into an inspected network:
 
 3. **Write down the Elastic IP.** You'll use it in every remaining lab, where it appears as `<FGT-EIP>`.
 
-**Check:** the Elastic IP shows as associated with FortiGate's primary interface, and the instance's **Public IPv4 address** field now shows `<FGT-EIP>`.
+**Check:**
+
+- [x] The Elastic IP shows as associated with FortiGate's primary interface.
+- [x] The instance's **Public IPv4 address** field shows `<FGT-EIP>`.
 
 ---
 
 ## Step 5: Create the `port2` Network Interface
 
-**Why:** FortiGate needs a second interface in the private subnet. That's `port2`, the side that faces the workloads and receives their traffic for inspection. You create it as a standalone Elastic Network Interface (ENI) with a **fixed** private IP, `10.100.2.4`. The private route table (Step 9) and FortiGate's configuration both depend on this exact address, so it must never change.
+FortiGate needs a second interface in the private subnet. That's `port2`, the side that faces the workloads and receives their traffic for inspection. You create it as a standalone Elastic Network Interface (ENI) with a **fixed** private IP, `10.100.2.4`. The private route table (Step 9) and FortiGate's configuration both depend on this exact address, so it must never change.
 
 1. **Start creating the interface:**
    - In the EC2 console's left navigation pane, under **Network & Security**, choose **Network Interfaces**.
@@ -264,14 +289,19 @@ In this lab you turn the empty network from Lab 1 into an inspected network:
 
    | Parameter | Value |
    | --- | --- |
-   | Description | `redwood-aws101-lab-fgt port2 (internal inspection interface)` |
+   | **Details** | |
+   | Description - *optional* | `redwood-aws101-lab-fgt port2 (internal inspection interface)` |
    | Subnet | `redwood-aws101-lab-subnet-private-1a` |
    | Interface type | **ENA** |
    | Private IPv4 address | **Custom** |
    | IPv4 address | `10.100.2.4` |
+   | **Security groups** | |
    | Security groups | `redwood-aws101-lab-fgt-sg` |
-   | Name tag | `redwood-aws101-lab-fgt-eni-port2` |
-   | Tag | `Project` = `Redwood-AWS-101` |
+   | **Tags - *optional*** | |
+   | Key | `Name` |
+   | Value - *optional* | `redwood-aws101-lab-fgt-eni-port2` |
+   | Key | `Project` |
+   | Value - *optional* | `Redwood-AWS-101` |
 
 3. Choose **Create network interface**.
 
@@ -280,13 +310,16 @@ In this lab you turn the empty network from Lab 1 into an inspected network:
 > [!IMPORTANT]
 > Make sure **Private IPv4 address** is set to **Custom** with `10.100.2.4`. If you leave it on **Auto-assign**, AWS picks a random address and the rest of the lab won't match.
 
-**Check:** `redwood-aws101-lab-fgt-eni-port2` appears in **Network Interfaces** with **Status: Available** (not yet attached) and private IP `10.100.2.4`.
+**Check:**
+
+- [x] `redwood-aws101-lab-fgt-eni-port2` appears in **Network Interfaces** with **Status: Available** (not yet attached).
+- [x] Its private IP is `10.100.2.4`.
 
 ---
 
 ## Step 6: Attach `port2` to FortiGate
 
-**Why:** The new interface exists, but no instance uses it yet. Attaching it gives FortiGate its second network port. You stop the instance first because FortiOS reliably detects new interfaces at boot. An interface attached while it's running may not appear until the next reboot.
+The new interface exists, but no instance uses it yet. Attaching it gives FortiGate its second network port. You stop the instance first because FortiOS reliably detects new interfaces at boot. An interface attached while it's running may not appear until the next reboot.
 
 1. **Stop FortiGate:**
    - In the EC2 console's left navigation pane, choose **Instances**.
@@ -294,7 +327,7 @@ In this lab you turn the empty network from Lab 1 into an inspected network:
    - Choose **Instance state → Stop instance**, then confirm.
    - Wait until **Instance state** shows **Stopped**.
 
-   ![STOP INSTANCE](images/step6.1.png)
+     ![STOP INSTANCE](images/step6.1.png)
 
 2. **Attach the interface:**
    - With `redwood-aws101-lab-fgt` still selected, choose **Actions → Networking → Attach network interface**.
@@ -316,17 +349,20 @@ In this lab you turn the empty network from Lab 1 into an inspected network:
    - Select the instance and open the **Networking** tab at the bottom of the page.
    - Under **Network interfaces**, confirm there are two: the primary interface in the public subnet, and `port2` in the private subnet at `10.100.2.4`.
 
-   ![VERIFY](images/step6.3.gif)
+     ![VERIFY](images/step6.3.gif)
 
 Leave the instance stopped. You start it again at the end of Step 7.
 
-**Check:** `redwood-aws101-lab-fgt` has two network interfaces, and the Elastic IP is still associated with the primary one.
+**Check:**
+
+- [x] `redwood-aws101-lab-fgt` has two network interfaces.
+- [x] The Elastic IP is still associated with the primary interface.
 
 ---
 
 ## Step 7: Disable Source/Destination Check
 
-**Why:** By default, AWS drops any packet that arrives at an interface unless that interface's own IP is the packet's source or destination. That protects normal servers, but it breaks a firewall. FortiGate forwards traffic **on behalf of other hosts**: for example, a packet from the test VM (`10.100.2.10`) to the Internet passes through `port2` and `port1`, and neither address is FortiGate's. You must turn this check off on both interfaces, or FortiGate looks healthy but passes no traffic.
+By default, AWS drops any packet that arrives at an interface unless that interface's own IP is the packet's source or destination. That protects normal servers, but it breaks a firewall. FortiGate forwards traffic **on behalf of other hosts**: for example, a packet from the test VM (`10.100.2.10`) to the Internet passes through `port2` and `port1`, and neither address is FortiGate's. You must turn this check off on both interfaces, or FortiGate looks healthy but passes no traffic.
 
 <details>
 <summary><b>More about the source/destination check</b></summary>
@@ -334,9 +370,11 @@ Leave the instance stopped. You start it again at the end of Step 7.
 The check is an AWS anti-spoofing feature applied to every network interface. Any instance that routes, NATs, or firewalls traffic must have it disabled: FortiGate, NAT instances, VPN appliances, and so on. Forgetting this is the most common reason a firewall deployment on AWS "doesn't work." AWS drops the packets silently, so neither FortiGate's logs nor the instance show an error.
 </details>
 
+---
+
 1. **Disable the check on `port1`:**
    - In the EC2 console's left navigation pane, under **Network & Security**, choose **Network Interfaces**.
-   - Select FortiGate's primary interface (in `redwood-aws101-lab-subnet-public-1a`, with the description "Primary network interface").
+   - Select FortiGate's primary interface (in `redwood-aws101-lab-subnet-public-1a`, with the name "redwood-aws101-lab-fgt").
    - Choose **Actions → Change source/dest. check**.
    - Clear the **Enable** checkbox for **Source/destination checking**, and choose **Save**.
 
@@ -353,16 +391,19 @@ The check is an AWS anti-spoofing feature applied to every network interface. An
 
    ![START INSTANCE](images/step7.3.png)
 
-**Check:** both interfaces show **Source/dest. check: false** in their **Details** tab, and FortiGate is **Running** with **3/3 checks passed**.
+**Check:**
+
+- [x] Both interfaces show **Source/dest. check: false** in their **Details** tab.
+- [x] FortiGate is **Running** with **3/3 checks passed**.
 
 ---
 
 ## Step 8: License FortiGate and Access the GUI
 
-**Why:** A new FortiGate-VM runs on a limited evaluation license (1 vCPU, 2 GB RAM, no FortiGuard services). Activating your FortiFlex token unlocks the full VM and the FortiGuard security services (IPS, antivirus, web filtering, and more). It also proves that FortiGate can reach the Internet through `port1`, the Elastic IP, and the Internet Gateway, because activation must contact FortiCare online.
+A new FortiGate-VM runs on a limited evaluation license (1 vCPU, 2 GB RAM, no FortiGuard services). Activating your FortiFlex token unlocks the full VM and the FortiGuard security services (IPS, antivirus, web filtering, and more). It also proves that FortiGate can reach the Internet through `port1`, the Elastic IP, and the Internet Gateway, because activation must contact FortiCare online.
 
 1. **Open the GUI:**
-   - In your browser, go to `https://<FGT-EIP>` (note the `https://`).
+   - In your browser, go to `https://<FGT-EIP>` (note the `https://` not `http://`).
    - FortiGate uses a self-signed certificate, so the browser shows a security warning. This is expected:
      - **Chrome:** choose **Advanced → Proceed to `<FGT-EIP>` (unsafe)**.
      - **Firefox:** choose **Advanced → Accept the Risk and Continue**.
@@ -406,14 +447,18 @@ The check is an AWS anti-spoofing feature applied to every network interface. An
 
      ![INTERFACES](images/step8.6.a.png)
 
-   - If `port2` has no IP address, edit it and set **Addressing mode: Manual** with IP `10.100.2.4/255.255.255.0`, then choose **OK**.
+   - If `port2` has no IP address, edit it and set **Addressing mode: Manual** with IP `10.100.2.4/255.255.255.0`, enable the **Administrative Access** `PING` then choose **OK**.
 
      ![CONFIG PORT2](images/step8.6.b.png)
 
 > [!TIP]
 > `port1` shows its private address (`10.100.1.x`), not the Elastic IP. AWS translates between the Elastic IP and the private address at the Internet Gateway, so FortiOS never sees the Elastic IP. This matters in Lab 3 (VIPs) and Lab 4 (VPN).
 
-**Check:** you can log in at `https://<FGT-EIP>`, the license shows **Valid**, and both `port1` and `port2` are **Up**.
+**Check:**
+
+- [x] You can log in at `https://<FGT-EIP>`.
+- [x] The license shows **Valid**.
+- [x] Both `port1` and `port2` are **Up**.
 
 ---
 
@@ -423,7 +468,7 @@ FortiGate is running, but nothing sends traffic to it yet. The private subnet st
 
 ## Step 9: Create the Private Route Table
 
-**Why:** This route table is what makes FortiGate the inspection point. Its default route sends all traffic leaving the private subnet (`0.0.0.0/0`) to FortiGate's `port2` interface. Any workload placed in the private subnet is then inspected automatically, with no configuration on the workload itself. FortiGate's own routing table then decides where the traffic goes next: the Internet (Lab 3) or the VPN tunnel to HQ (Lab 4).
+This route table is what makes FortiGate the inspection point. Its default route sends all traffic leaving the private subnet (`0.0.0.0/0`) to FortiGate's `port2` interface. Any workload placed in the private subnet is then inspected automatically, with no configuration on the workload itself. FortiGate's own routing table then decides where the traffic goes next: the Internet (Lab 3) or the VPN tunnel to HQ (Lab 4).
 
 1. **Create the route table:**
    - Open the VPC console. In the left navigation pane, choose **Route tables**.
@@ -435,9 +480,12 @@ FortiGate is running, but nothing sends traffic to it yet. The private subnet st
 
      | Parameter | Value |
      | --- | --- |
-     | Name | `redwood-aws101-lab-rt-private` |
+     | **Route table settings** | |
+     | Name - *optional* | `redwood-aws101-lab-rt-private` |
      | VPC | `redwood-aws101-lab-vpc` |
-     | Tag | `Project` = `Redwood-AWS-101` |
+     | **Tags** | |
+     | Key | `Project` |
+     | Value - *optional* | `Redwood-AWS-101` |
 
    - Choose **Create route table**.
 
@@ -453,7 +501,7 @@ FortiGate is running, but nothing sends traffic to it yet. The private subnet st
 
    - Choose **Save changes**.
 
-   ![ADD ROUTE](images/step9.2.png)
+     ![ADD ROUTE](images/step9.2.png)
 
    > [!IMPORTANT]
    > In the **Target** list, choose **Network Interface**, not **Instance**. FortiGate has two interfaces, and the route must point specifically at `port2`.
@@ -464,6 +512,8 @@ FortiGate is running, but nothing sends traffic to it yet. The private subnet st
    VPC routes always point at AWS objects (interfaces, gateways, endpoints), never at a bare IP address. Targeting the `port2` interface makes the next hop explicit. The interface is a standalone object, so if FortiGate is ever replaced (for a resize or an upgrade), you move the interface to the new instance and the route keeps working unchanged.
    </details>
 
+   ---
+
 3. **Associate the route table with the private subnet:**
    - Select the **Subnet associations** tab and choose **Edit subnet associations**.
    - Select `redwood-aws101-lab-subnet-private-1a` (`10.100.2.0/24`).
@@ -471,7 +521,11 @@ FortiGate is running, but nothing sends traffic to it yet. The private subnet st
 
    ![SUBNET ASSOCIATION](images/step9.3.gif)
 
-**Check:** `redwood-aws101-lab-rt-private` has two routes (`10.100.0.0/16 → local` and `0.0.0.0/0 → eni-...`), and `redwood-aws101-lab-subnet-private-1a` is listed under **Subnet associations**. Each subnet now has its own route table, and neither uses the Main route table.
+**Check:**
+
+- [x] `redwood-aws101-lab-rt-private` has two routes: `10.100.0.0/16 → local` and `0.0.0.0/0 → eni-...`.
+- [x] `redwood-aws101-lab-subnet-private-1a` is listed under **Subnet associations**.
+- [x] Each subnet has its own route table, and neither uses the Main route table.
 
 <details>
 <summary><b>Production considerations</b></summary>
