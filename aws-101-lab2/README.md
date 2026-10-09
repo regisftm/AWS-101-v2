@@ -49,7 +49,7 @@ FortiGate-VM is sold through AWS Marketplace. Before your account can launch it,
 
    - [x] In **AWS Marketplace → Manage subscriptions**, the FortiGate listing appears under **Active subscriptions**.
 
-   ![VALIDATION](images/step1.validation.png)
+   ![VALIDATION](images/step1.check.png)
 
 ---
 
@@ -96,7 +96,7 @@ AWS requires a key pair to launch an instance. In this workshop you use it to SS
 - [x] `redwood-aws101-lab-kp` appears in **EC2 → Key Pairs**.
 - [x] The private key file is saved on your computer.
 
-![VERIFICATION](images/step2.4.png)
+![VERIFICATION](images/step2.check.png)
 
 ---
 
@@ -137,12 +137,11 @@ This creates the FortiGate itself. The instance launches with one network interf
    - Select `c5.large` (2 vCPU, 4 GiB memory). It is a supported FortiGate-VM type and is enough for this workshop.
 
    ![INSTANCE TYPE](images/step3.4.png)
-<!-- TODO: verify against the current FortiGate-VM on AWS supported instance types list -->
 
-1. **Key pair:**
+5. **Key pair:**
    - In **Key pair name**, select `redwood-aws101-lab-kp`.
 
-2. **Network settings:**
+6. **Network settings:**
    - Choose **Edit** in the **Network settings** panel and fill in:
 
      | Parameter | Value |
@@ -169,7 +168,7 @@ This creates the FortiGate itself. The instance launches with one network interf
      | All traffic | All | Custom | `10.100.0.0/16` | Traffic from VPC |
 
      ![SG GROUP CONFIG I](images/step3.6.b.gif)
-     ![SG GROUP CONFIG II](images/step3.6.d.png)
+     ![SG GROUP CONFIG II](images/step3.6.c.png)
 
    > [!IMPORTANT]
    > Keep **Auto-assign public IP** set to **Disable**. In Step 4 you attach an Elastic IP, a public address that never changes. An auto-assigned public IP is released every time the instance stops, which you'll do in Step 6. That would break GUI access, the Lab 3 VIPs, and the Lab 4 VPN.
@@ -184,26 +183,24 @@ This creates the FortiGate itself. The instance launches with one network interf
    In production, use a separate security group for each interface role (Internet-facing and internal), and limit management access to a trusted admin network.
    </details>
 
-3. **Storage:**
+7. **Storage:**
    - The FortiGate AMI provides two volumes: a 2 GiB root volume and a 30 GiB log volume (`/dev/sdb`). Confirm both are listed. Add the log volume only if it's missing.
-     <!-- TODO: verify the default block-device mapping of the current FortiGate BYOL AMI -->
 
-4. **Instance metadata:**
+8. **Instance metadata:**
    - Expand **Advanced details** and set **Metadata version** to **V2 only (token required)**.
    - This enforces IMDSv2, which protects the instance's AWS credentials from SSRF-style attacks.
-     <!-- TODO: verify IMDSv2-only support for the FortiOS version in use -->
 
-5. **Launch:**
+9. **Launch:**
    - In the **Summary** panel on the right, confirm **Number of instances** is `1`.
    - Choose **Launch instance**.
 
-   ![LAUNCH INSTANCE](images/step3.8.png)
+   ![LAUNCH INSTANCE](images/step3.9.png)
 
-6. **Wait for the instance to start:**
+10. **Wait for the instance to start:**
     - Choose **View all instances**.
     - Wait until **Instance state** shows **Running** and **Status check** shows **3/3 checks passed**. This takes 2–4 minutes. Use the refresh button to update the view.
 
-    ![RUNNING](images/step3.9.png)
+    ![RUNNING](images/step3.10.png)
 
 **Check:**
 
@@ -305,7 +302,7 @@ FortiGate needs a second interface in the private subnet. That's `port2`, the si
 
 3. Choose **Create network interface**.
 
-   ![CREATE](images/step5.2.gif)
+   ![CREATE](images/step5.3.gif)
 
 > [!IMPORTANT]
 > Make sure **Private IPv4 address** is set to **Custom** with `10.100.2.4`. If you leave it on **Auto-assign**, AWS picks a random address and the rest of the lab won't match.
@@ -474,7 +471,7 @@ This route table is what makes FortiGate the inspection point. Its default route
    - Open the VPC console. In the left navigation pane, choose **Route tables**.
    - Choose **Create route table**.
 
-     ![ROUTE TABLES](images/step9.1.png)
+     ![ROUTE TABLES](images/step9.1.a.png)
 
    - Fill in the settings:
 

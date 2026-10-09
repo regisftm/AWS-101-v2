@@ -127,7 +127,7 @@ No other AWS change is needed. Security groups allow all outbound traffic by def
 
    - Choose **Begin**.
 
-     ![VPN WIZ](images/step3.1.png)
+     ![VPN WIZ](images/step2.2.png)
 
 3. **VPN Tunnel page:** these settings define how the two FortiGates authenticate each other and build the tunnel.
 
@@ -143,7 +143,7 @@ No other AWS change is needed. Security groups allow all outbound traffic by def
 
    - Choose **Next**.
 
-     ![VPN TUNNEL](images/step3.2.png)
+     ![VPN TUNNEL](images/step2.3.png)
 
    > [!NOTE]
    > The pre-shared key is case-sensitive and must be identical on both sides. Copy and paste it to avoid typos. In production, use a random key of at least 20 characters, or certificate authentication.
@@ -161,7 +161,7 @@ No other AWS change is needed. Security groups allow all outbound traffic by def
 
    - Choose **Next**.
 
-     ![REMOTE SITE](images/step3.3.png)
+     ![REMOTE SITE](images/step2.4.png)
 
 5. **Local Site page:** these settings describe this end, the HQ network.
 
@@ -176,12 +176,12 @@ No other AWS change is needed. Security groups allow all outbound traffic by def
 
    - Choose **Next**.
 
-     ![LOCAL SITE](images/step3.4.png)
+     ![LOCAL SITE](images/step2.5.png)
 
 6. **Review and submit:**
    - Review the list of objects the wizard will create, then choose **Submit**.
 
-   ![REVIEW](images/step3.5.png)
+   ![REVIEW](images/step2.6.png)
 
 7. **Verify what the wizard created:**
    - **VPN → VPN Tunnels:** `to_aws` is listed, with status **Inactive** or **Down**. That's expected until the AWS side is configured.
@@ -269,14 +269,14 @@ Now you build the mirror image on the AWS FortiGate. The local and remote values
 6. **Review and submit:**
    - Review the list of objects, then choose **Submit**.
 
-     ![REVIEW AWS](images/step4.5.png)
+     ![REVIEW AWS](images/step3.6.png)
 
 7. **Verify what the wizard created:**
    - **VPN → VPN Tunnels:** `to_on_prem` is listed. Within about 30 seconds its status should change to **Up**.
    - **Network → Static Routes:** a route to `192.168.0.0/22` through the `to_on_prem` interface.
    - **Policy & Objects → Firewall Policy:** two new policies, `port2 → to_on_prem` and `to_on_prem → port2`.
 
-     ![VERIFICATION](images/step4.7.png)
+     ![VERIFICATION](images/step3.7.png)
 
 **Check:**
 
@@ -291,15 +291,14 @@ Now you build the mirror image on the AWS FortiGate. The local and remote values
 
 1. **On the AWS FortiGate:**
    - Go to **Dashboard → Network** and open the **IPsec** widget.
-     <!-- TODO: verify the IPsec monitor GUI path for the FortiOS version in use -->
    - Confirm that `to_on_prem` shows status **Up**, with the remote gateway `<on-prem-public-ip>`.
 
-     ![TO_ON_PREM](images/step5.1.png)
+     ![TO_ON_PREM](images/step4.1.png)
 
 2. **On the HQ FortiGate:**
    - Open the same widget and confirm that `to_aws` is **Up**, with the remote gateway `<FGT-EIP>`.
 
-     ![TO_AWS](images/step5.2.png)
+     ![TO_AWS](images/step4.2.png)
 
 3. **Optional CLI check** on the AWS FortiGate (open the CLI console from the `>_` icon at the top right of the GUI):
 
@@ -350,7 +349,7 @@ Now you build the mirror image on the AWS FortiGate. The local and remote values
    TcpTestSucceeded : True
    ```
 
-   ![POWERSHELL](images/step6.1.3.png)
+   ![POWERSHELL](images/step5.1.3.png)
 
    `SourceAddress` is the Windows VM's own private IP. The traffic crossed the tunnel without NAT.
 
@@ -359,7 +358,7 @@ Now you build the mirror image on the AWS FortiGate. The local and remote values
    - In the address bar, go to `http://10.100.2.10`.
    - The **Welcome to nginx!** page loads. This is the web server you installed on the test VM in Lab 3.
 
-     ![BROWSER](images/step5.4.png)
+     ![BROWSER](images/step5.1.4.png)
 
    > [!NOTE]
    > Use the test VM's **private** IP on port **80**, not `<FGT-EIP>:8080`. Port 8080 is the VIP that publishes the server to the Internet. From HQ, the request travels privately through the VPN tunnel and reaches nginx directly on its own port.

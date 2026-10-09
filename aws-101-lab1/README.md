@@ -132,7 +132,7 @@ A Virtual Private Cloud (VPC) is Redwood's own isolated network inside AWS, the 
 
 5. The VPC details page opens.
 
-   ![VPC INFORMATION](images/step2.6.png)
+   ![VPC INFORMATION](images/step2.5.png)
 
 **Check:**
 
@@ -175,8 +175,8 @@ A subnet is a slice of the VPC's address range that lives in one Availability Zo
    | Key | `Project` |
    | Value - *optional* | `Redwood-AWS-101` |
 
-   ![SUBNET PARAMS I](images/step3.2.png)
-   ![SUBNET PARAMS II](images/step3.3.png)
+   ![SUBNET PARAMS I](images/step3.2.a.png)
+   ![SUBNET PARAMS II](images/step3.2.b.png)
 
 3. Choose **Create subnet**.
 
@@ -228,7 +228,7 @@ This is the protected side of the design. It will hold FortiGate's `port2` and t
 
 2. Choose **Create subnet**.
 
-   ![SUBNETS](images/step4.3.png)
+   ![SUBNETS](images/step4.2.png)
 
 **Check:**
 
@@ -237,7 +237,7 @@ This is the protected side of the design. It will hold FortiGate's `port2` and t
 
 Here is how traffic will flow once FortiGate is in place (Lab 2):
 
-![TRAFFIC FLOW](images/step4.4.png)
+![TRAFFIC FLOW](images/step4.flow.png)
 
 <details>
 <summary><b>Why only two subnets?</b></summary>
@@ -284,7 +284,7 @@ A new VPC is completely isolated: nothing inside it can reach the Internet, and 
 3. **Attach it to the VPC:**
    - A new gateway starts in the **Detached** state. On the gateway's details page, choose **Actions → Attach to VPC**.
 
-     ![ATTACH IGW](images/step5.3.png)
+     ![ATTACH IGW](images/step5.3.a.png)
 
    - Under **Available VPCs**, select `redwood-aws101-lab-vpc`.
    - Choose **Attach internet gateway**.
@@ -312,7 +312,7 @@ Every subnet uses a route table to decide where to send traffic. A subnet become
    - In the VPC console's left navigation pane, choose **Route tables**.
    - Choose **Create route table**.
 
-     ![OPEN RT](images/step6.1.png)
+     ![OPEN RT](images/step6.1.a.png)
 
    - Fill in the settings:
 
@@ -324,7 +324,6 @@ Every subnet uses a route table to decide where to send traffic. A subnet become
      | **Tags** | |
      | Key | `Project` |
      | Value - *optional* | `Redwood-AWS-101` |
-
 
    - Choose **Create route table**.
 

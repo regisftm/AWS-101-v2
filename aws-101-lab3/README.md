@@ -52,7 +52,6 @@ You need a workload to protect. This small Ubuntu VM plays the role of Redwood's
 
 4. **Instance type:**
    - Select `t3.micro` (2 vCPU, 1 GiB memory). A test server needs very little capacity.
-     <!-- TODO: verify Free Tier eligibility of t3.micro in ca-central-1 for the account type in use -->
 
 5. **Key pair:**
    - In **Key pair name**, select `redwood-aws101-lab-kp`, the same key you created in Lab 2.
@@ -96,7 +95,6 @@ You need a workload to protect. This small Ubuntu VM plays the role of Redwood's
 
 9. **Instance metadata:**
    - Expand **Advanced details** and set **Metadata version** to **V2 only (token required)**, as you did for FortiGate.
-     <!-- TODO: verify the current Ubuntu 26.04 AMI defaults to IMDSv2-only -->
 
 10. **Launch:**
     - Choose **Launch instance**, then **View all instances**.
@@ -205,7 +203,7 @@ On AWS, `port1` holds a private VPC address (`10.100.1.x`). The Internet Gateway
 - [x] `TESTVM-INTERNAL-VIP-SSH` maps `0.0.0.0:2222 → 10.100.2.10:22`.
 - [x] `TESTVM-INTERNAL-VIP-HTTP` maps `0.0.0.0:8080 → 10.100.2.10:80`.
 
-![VALIDATION](images/step3.valid.png)
+![VALIDATION](images/step3.check.png)
 
 ---
 
@@ -297,7 +295,7 @@ This proves the inbound path works end to end: your laptop → Elastic IP → In
    - The first time you connect, SSH asks whether to trust the host key. Type `yes` and press **Enter**.
    - You should land at the prompt `ubuntu@ip-10-100-2-10:~$`.
 
-   ![SSH ACCESS](images/step6.2.png)
+   ![SSH ACCESS](images/step6.1.png)
 
 2. **Test reachability from the VM:**
    - Ping FortiGate's `port2`. This should **succeed**, because the traffic stays inside the VPC:
@@ -307,7 +305,6 @@ This proves the inbound path works end to end: your laptop → Elastic IP → In
      ```
 
      If it fails, enable **PING** under **Administrative Access** on `port2` (**Network → Interfaces → port2**).
-     <!-- TODO: verify whether PING is enabled on port2 by default in the AWS FortiGate image -->
 
    - Ping the Internet. This should **fail**:
 
@@ -484,7 +481,7 @@ Logs show individual sessions, while FortiView shows the big picture: who is tal
    - Select the **Destinations** tab.
    - You should see the destinations you tested in Step 8: `8.8.8.8`, `www.google.com`, `www.fortinet.com`, `ifconfig.me`, and the Ubuntu package mirrors used by `apt`.
 
-   ![DRILL DOWN](images/step10.3.png)
+   ![DRILL DOWN](images/step10.2.png)
 
 **Check:**
 
@@ -516,8 +513,8 @@ Before moving to Lab 4, confirm:
 
 To find out which policy (if any) matches a given flow, use **Policy & Objects → Firewall Policy → Policy Match**. For example, enter incoming interface `port2`, protocol ICMP, source `10.100.2.10`, and destination `8.8.8.8`, then choose **Find matching policy**. FortiGate shows the matching policy, or "Implicit Deny" if nothing allows the traffic.
 
-![POLICY MATCH](images/step_final.png)
-![ACCEPT](images/step_final_2.png)
+![POLICY MATCH](images/troubleshooting.a.png)
+![ACCEPT](images/troubleshooting.b.png)
 
 ---
 
