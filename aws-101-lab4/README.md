@@ -85,7 +85,7 @@ The two sides of the tunnel mirror each other: each side's "local" network is th
    - Open the EC2 console. In the left navigation pane, under **Network & Security**, choose **Security Groups**.
    - Select `redwood-aws101-lab-fgt-sg`.
 
-   ![SECURITY GROUPS](images/step1.1.png)
+     ![SECURITY GROUPS](images/step1.1.png)
 
 2. **Add the IPsec rules:**
    - Select the **Inbound rules** tab and choose **Edit inbound rules**.
@@ -98,7 +98,7 @@ The two sides of the tunnel mirror each other: each side's "local" network is th
 
    - Choose **Save rules**.
 
-   ![SECURITY GROUPS RULES](images/step1.2.png)
+     ![SECURITY GROUPS RULES](images/step1.2.png)
 
 No other AWS change is needed. Security groups allow all outbound traffic by default, so the AWS FortiGate can already reach the HQ FortiGate.
 
@@ -127,7 +127,7 @@ No other AWS change is needed. Security groups allow all outbound traffic by def
 
    - Choose **Begin**.
 
-   ![VPN WIZ](images/step3.1.png)
+     ![VPN WIZ](images/step3.1.png)
 
 3. **VPN Tunnel page:** these settings define how the two FortiGates authenticate each other and build the tunnel.
 
@@ -143,7 +143,7 @@ No other AWS change is needed. Security groups allow all outbound traffic by def
 
    - Choose **Next**.
 
-   ![VPN TUNNEL](images/step3.2.png)
+     ![VPN TUNNEL](images/step3.2.png)
 
    > [!NOTE]
    > The pre-shared key is case-sensitive and must be identical on both sides. Copy and paste it to avoid typos. In production, use a random key of at least 20 characters, or certificate authentication.
@@ -161,7 +161,7 @@ No other AWS change is needed. Security groups allow all outbound traffic by def
 
    - Choose **Next**.
 
-   ![REMOTE SITE](images/step3.3.png)
+     ![REMOTE SITE](images/step3.3.png)
 
 5. **Local Site page:** these settings describe this end, the HQ network.
 
@@ -176,7 +176,7 @@ No other AWS change is needed. Security groups allow all outbound traffic by def
 
    - Choose **Next**.
 
-   ![LOCAL SITE](images/step3.4.png)
+     ![LOCAL SITE](images/step3.4.png)
 
 6. **Review and submit:**
    - Review the list of objects the wizard will create, then choose **Submit**.
@@ -211,7 +211,7 @@ In production, review the auto-created policies and narrow their sources, destin
 
 ## Step 3: Configure the AWS FortiGate (`to_on_prem`)
 
-**Why:** Now you build the mirror image on the AWS FortiGate. The local and remote values are swapped compared to Step 2. As soon as you submit, the two FortiGates find each other over UDP/500, detect the NAT at the Internet Gateway, switch to UDP/4500, and bring the tunnel up.
+Now you build the mirror image on the AWS FortiGate. The local and remote values are swapped compared to Step 2. As soon as you submit, the two FortiGates find each other over UDP/500, detect the NAT at the Internet Gateway, switch to UDP/4500, and bring the tunnel up.
 
 1. **Log in to your AWS FortiGate:**
    - In your browser, go to `https://<FGT-EIP>` and log in as `admin`.
@@ -269,14 +269,14 @@ In production, review the auto-created policies and narrow their sources, destin
 6. **Review and submit:**
    - Review the list of objects, then choose **Submit**.
 
-   ![REVIEW AWS](images/step4.5.png)
+     ![REVIEW AWS](images/step4.5.png)
 
 7. **Verify what the wizard created:**
    - **VPN → VPN Tunnels:** `to_on_prem` is listed. Within about 30 seconds its status should change to **Up**.
    - **Network → Static Routes:** a route to `192.168.0.0/22` through the `to_on_prem` interface.
    - **Policy & Objects → Firewall Policy:** two new policies, `port2 → to_on_prem` and `to_on_prem → port2`.
 
-   ![VERIFICATION](images/step4.7.png)
+     ![VERIFICATION](images/step4.7.png)
 
 **Check:**
 
@@ -287,19 +287,19 @@ In production, review the auto-created policies and narrow their sources, destin
 
 ## Step 4: Verify the Tunnel
 
-**Why:** "Up" in the tunnel list means Phase 1 (the IKE session between the FortiGates) succeeded. Traffic only flows if Phase 2 (the encrypted channel for your subnets) is also up. Checking both sides confirms the two configurations really match before you test with real traffic.
+"Up" in the tunnel list means Phase 1 (the IKE session between the FortiGates) succeeded. Traffic only flows if Phase 2 (the encrypted channel for your subnets) is also up. Checking both sides confirms the two configurations really match before you test with real traffic.
 
 1. **On the AWS FortiGate:**
    - Go to **Dashboard → Network** and open the **IPsec** widget.
      <!-- TODO: verify the IPsec monitor GUI path for the FortiOS version in use -->
    - Confirm that `to_on_prem` shows status **Up**, with the remote gateway `<on-prem-public-ip>`.
 
-   ![TO_ON_PREM](images/step5.1.png)
+     ![TO_ON_PREM](images/step5.1.png)
 
 2. **On the HQ FortiGate:**
    - Open the same widget and confirm that `to_aws` is **Up**, with the remote gateway `<FGT-EIP>`.
 
-   ![TO_AWS](images/step5.2.png)
+     ![TO_AWS](images/step5.2.png)
 
 3. **Optional CLI check** on the AWS FortiGate (open the CLI console from the `>_` icon at the top right of the GUI):
 
@@ -323,7 +323,7 @@ In production, review the auto-created policies and narrow their sources, destin
 
 ## Step 5: Test Cross-Site Connectivity
 
-**Why:** An "Up" tunnel proves the FortiGates agree, but Redwood cares about applications. You now test real TCP connections between real hosts, in both directions: the HQ Windows VM reaches the AWS server over SSH (port 22), and the AWS server reaches the HQ Windows VM over RDP (port 3389). Both use private addresses, with no NAT and no public IPs involved.
+**Why:** An "Up" tunnel proves the FortiGates agree, but Redwood cares about applications. You now test real TCP connections between real hosts, in both directions: the HQ Windows VM reaches the AWS server over SSH (port 22) and HTTP (port 80), and the AWS server reaches the HQ Windows VM over RDP (port 3389). Both use private addresses, with no NAT and no public IPs involved.
 
 ### 5.1 HQ → AWS
 
@@ -354,6 +354,24 @@ In production, review the auto-created policies and narrow their sources, destin
 
    `SourceAddress` is the Windows VM's own private IP. The traffic crossed the tunnel without NAT.
 
+4. **Browse to the nginx web server on the AWS test VM:**
+   - On the HQ Windows VM, open **Microsoft Edge** (or any installed browser).
+   - In the address bar, go to `http://10.100.2.10`.
+   - The **Welcome to nginx!** page loads. This is the web server you installed on the test VM in Lab 3.
+
+     ![BROWSER](images/step5.4.png)
+
+   > [!NOTE]
+   > Use the test VM's **private** IP on port **80**, not `<FGT-EIP>:8080`. Port 8080 is the VIP that publishes the server to the Internet. From HQ, the request travels privately through the VPN tunnel and reaches nginx directly on its own port.
+
+   If no browser is available, you can run the same test from PowerShell:
+
+   ```powershell
+   Invoke-WebRequest -Uri http://10.100.2.10 -UseBasicParsing | Select-Object StatusCode
+   ```
+
+   Expected result: `StatusCode` is `200`.
+
 ### 5.2 AWS → HQ
 
 1. **SSH to the AWS test VM** from your workstation, as in Lab 3:
@@ -379,6 +397,7 @@ In production, review the auto-created policies and narrow their sources, destin
 **Check:**
 
 - [x] `Test-NetConnection` returns `TcpTestSucceeded : True`.
+- [x] `http://10.100.2.10` shows the **Welcome to nginx!** page on the HQ Windows VM.
 - [x] `nc` reports `succeeded!`.
 
 <details>
@@ -400,6 +419,7 @@ You didn't need to change any AWS route table, add a Transit Gateway, or create 
 | Phase 1 is up, but Phase 2 fails (`INVALID_ID_INFORMATION`) | The local and remote subnets don't mirror each other. AWS: local `10.100.0.0/16`, remote `192.168.0.0/22`. HQ: the opposite. |
 | The tunnel is up, but traffic fails | Check that both wizard policies (`port2 → tunnel` and `tunnel → port2`) exist and are enabled on both FortiGates, and that each side has the static route to the remote network. |
 | `Test-NetConnection` to port 22 fails, but `nc` from AWS works | The test VM's security group must allow SSH. It allows `0.0.0.0/0` on port 22, which includes `192.168.0.0/22`. |
+| Port 22 works from HQ, but `http://10.100.2.10` doesn't load | Check that nginx is running on the test VM (`systemctl status nginx`, installed in Lab 3, Step 8) and that `redwood-aws101-lab-testvm-sg` allows HTTP (80). Make sure you used `http://`, not `https://`. |
 | The tunnel drops when idle | Check that NAT-T keepalive is `10` seconds on both sides. |
 
 To watch cross-site packets live, run this on the AWS FortiGate CLI while you repeat a test:
@@ -414,33 +434,39 @@ You should see packets on `port2` (to and from the test VM) and on `to_on_prem` 
 
 ## Clean-Up
 
-**Why:** Several workshop resources bill by the hour even when idle, including the FortiGate instance, the test VM, their disks, and the Elastic IP. Stopping the instances isn't enough: disks and Elastic IPs keep billing while an instance is stopped. Delete everything, in the order below. Some resources can't be deleted while another resource still uses them.
+Several workshop resources bill by the hour even when idle, including the FortiGate instance, the test VM, their disks, and the Elastic IP. Stopping the instances isn't enough: disks and Elastic IPs keep billing while an instance is stopped. Delete everything, in the order below. Some resources can't be deleted while another resource still uses them.
 
 1. **Terminate the instances:**
-   - **EC2 → Instances:** select `redwood-aws101-lab-fgt` and `redwood-aws101-lab-testvm`, then choose **Instance state → Terminate instance**.
+   - **EC2 → Instances:** select `redwood-aws101-lab-fgt` and `redwood-aws101-lab-testvm`, then choose **Instance state → Terminate (delete) instance**.
+   - Click on **Terminate (delete)**
    - Wait until both show **Terminated**. Their root disks are deleted with them.
 
 2. **Release the Elastic IP:**
-   - **EC2 → Elastic IPs:** select `redwood-aws101-lab-fgt-eip` and choose **Actions → Release Elastic IP addresses**. If it's still associated, choose **Disassociate** first.
+   - **EC2 → Network & Security → Elastic IPs:** select `redwood-aws101-lab-fgt-eip` and choose **Actions → Release Elastic IP addresses**. If it's still associated, choose **Disassociate** first.
+   - Click **Confirm**
 
 3. **Delete the `port2` interface:**
-   - **EC2 → Network Interfaces:** if `redwood-aws101-lab-fgt-eni-port2` still exists, select it and choose **Actions → Delete**.
+   - **EC2 → Network & Security → Network Interfaces:** if `redwood-aws101-lab-fgt-eni-port2` still exists, select it and choose **Actions → Delete**.
 
 4. **Delete any remaining volumes:**
-   - **EC2 → Volumes:** if a volume tagged `Project` = `Redwood-AWS-101` is still listed (for example, FortiGate's log disk) and shows **Available**, select it and choose **Actions → Delete volume**.
+   - **EC2 → Elastic Block Store → Volumes:** if a volume tagged `Project` = `Redwood-AWS-101` is still listed (for example, FortiGate's log disk) and shows **Available**, select it and choose **Actions → Delete volume**.
 
 5. **Delete the security groups:**
-   - **EC2 → Security Groups:** delete `redwood-aws101-lab-testvm-sg` and `redwood-aws101-lab-fgt-sg`.
+   - **EC2 → Network & Security → Security Groups:** delete `redwood-aws101-lab-testvm-sg` and `redwood-aws101-lab-fgt-sg`.
+   - To confirm deletion, enter **delete** in the box, and click **Delete**
 
 6. **Delete the key pair:**
-   - **EC2 → Key Pairs:** delete `redwood-aws101-lab-kp`. Also delete the private key file from your computer.
+   - **EC2 → Network & Security → Key Pairs:** delete `redwood-aws101-lab-kp`. Also delete the private key file from your computer.
 
 7. **Delete the VPC:**
    - **VPC → Your VPCs:** select `redwood-aws101-lab-vpc` and choose **Actions → Delete VPC**. This also deletes its subnets and route tables, and detaches and deletes the Internet Gateway.
+   - To confirm deletion, enter **delete** in the field, and click **Delete**
 
 8. **Confirm nothing is left:**
-   - **Resource Groups & Tag Editor:** if you created `redwood-aws101-lab-rg` in Lab 1, delete it.
+   - Go to **Resource Groups & Tag Editor** if you created `redwood-aws101-lab-rg` in Lab 1, delete it.
    - Open **Tag Editor**, set **Regions** to **All regions**, set **Resource types** to **All supported resource types**, search for tag `Project` = `Redwood-AWS-101`, and confirm that no resources are returned.
+
+   **NOTE:** Deleted resources may still appear in the search results for a while before they're removed from the list. To confirm a resource has been deleted, click it and see where the link takes you.
 
 9. **Optional, HQ side:**
    - On your HQ FortiGate, delete the `to_aws` policies, route, and tunnel. The HQ environment is hosted by your instructor and doesn't bill your AWS account.
