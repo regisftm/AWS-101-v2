@@ -520,4 +520,4 @@ To find out which policy (if any) matches a given flow, use **Policy & Objects â
 
 The security team signs off: the application is published, and both directions are inspected and logged. But the application still needs databases and identity services that live at HQ. In Lab 4, you connect AWS to HQ.
 
-*Next:* [**Lab 4: Site-to-Site VPN Configuration**](/aws-101-lab4/README.md)
+*Next:* [**Lab 4: Site-to-Site VPN Configuration**](../aws-101-lab4/README.md)

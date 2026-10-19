@@ -35,11 +35,11 @@ Complete the labs in order. Each one builds on the previous lab.
 
 | Lab | Stage | Time |
 | --- | --- | --- |
-| 1. [AWS Infrastructure Foundation](/aws-101-lab1/README.md) | Build the AWS landing zone network | ~25 min |
-| 2. [FortiGate VM Deployment & Traffic Steering](/aws-101-lab2/README.md) | Make FortiGate the only way in and out | ~60 min |
-| 3. [Security Policies & Traffic Testing](/aws-101-lab3/README.md) | Launch the first application server, then prove it is reachable and inspected | ~40 min |
-| 4. [Site-to-Site VPN Configuration](/aws-101-lab4/README.md) | Connect AWS to HQ | ~30 min |
-| [Clean-Up](/aws-101-lab4/README.md#clean-up) | Delete every resource so nothing keeps billing | ~10 min |
+| 1. [AWS Infrastructure Foundation](aws-101-lab1/README.md) | Build the AWS landing zone network | ~25 min |
+| 2. [FortiGate VM Deployment & Traffic Steering](aws-101-lab2/README.md) | Make FortiGate the only way in and out | ~60 min |
+| 3. [Security Policies & Traffic Testing](aws-101-lab3/README.md) | Launch the first application server, then prove it is reachable and inspected | ~40 min |
+| 4. [Site-to-Site VPN Configuration](aws-101-lab4/README.md) | Connect AWS to HQ | ~30 min |
+| [Clean-Up](aws-101-lab4/README.md#clean-up) | Delete every resource so nothing keeps billing | ~10 min |
 
 ## What You Need
 
@@ -56,4 +56,4 @@ Complete the labs in order. Each one builds on the previous lab.
 > Use an isolated sandbox AWS account, not one connected to production. These examples are **not suitable for production**.
 
 > [!WARNING]
-> The workshop launches two EC2 instances in your account: the FortiGate-VM (`c5.large`) and a test VM (`t3.micro`). The HQ FortiGate is hosted by your instructor, not in your account. Stopped instances still incur EBS and Elastic IP charges. When you finish, follow the **Clean-Up** section at the end of [Lab 4](/aws-101-lab4/README.md).
+> The workshop launches two EC2 instances in your account: the FortiGate-VM (`c5.large`) and a test VM (`t3.micro`). The HQ FortiGate is hosted by your instructor, not in your account. Stopped instances still incur EBS and Elastic IP charges. When you finish, follow the **Clean-Up** section at the end of [Lab 4](aws-101-lab4/README.md).

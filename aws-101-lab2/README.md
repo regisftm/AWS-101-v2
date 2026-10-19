@@ -9,7 +9,7 @@ In this lab you turn the empty network from Lab 1 into an inspected network:
 - **Part 1:** deploy a FortiGate-VM with two network interfaces. `port1` sits in the public subnet and faces the Internet. `port2` sits in the private subnet and faces the workloads. You give `port1` a permanent public IP and license FortiGate with FortiFlex.
 - **Part 2:** create the private subnet's route table, which sends all outbound traffic to FortiGate's `port2`. From then on, FortiGate is the only way out of the private subnet.
 
-**Prerequisites:** Lab 1 completed, plus the FortiFlex token and SSH client from [What You Need](/README.md#what-you-need).
+**Prerequisites:** Lab 1 completed, plus the FortiFlex token and SSH client from [What You Need](../README.md#what-you-need).
 
 ![REFERENCE ARCHITECTURE](images/reference-architecture-lab2.png)
 
@@ -559,4 +559,4 @@ Before moving to Lab 3, confirm:
 
 FortiGate now controls every path in and out of the private subnet, and it blocks everything until you add policies. In Lab 3, Redwood's first application server arrives.
 
-*Next:* [**Lab 3: Security Policies & Traffic Testing**](/aws-101-lab3/README.md)
+*Next:* [**Lab 3: Security Policies & Traffic Testing**](../aws-101-lab3/README.md)

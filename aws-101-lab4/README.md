@@ -13,7 +13,7 @@ You'll configure the tunnel in this order:
 3. Configure the AWS side of the tunnel. The tunnel comes up.
 4. Verify the tunnel, then test traffic in both directions.
 
-**Prerequisites:** Labs 1–3 completed, plus the HQ details from [What You Need](/README.md#what-you-need).
+**Prerequisites:** Labs 1–3 completed, plus the HQ details from [What You Need](../README.md#what-you-need).
 
 **Your HQ environment** (hosted by your instructor, one per student):
 

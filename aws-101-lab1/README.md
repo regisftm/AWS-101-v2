@@ -14,7 +14,7 @@ In this lab you build the AWS network that every later lab depends on:
 
 The private subnet's route table is created in Lab 2. Its default route must point at FortiGate, which doesn't exist yet.
 
-**Prerequisites:** the AWS account described in [What You Need](/README.md#what-you-need). Sign in as an MFA-protected IAM identity, never the root user.
+**Prerequisites:** the AWS account described in [What You Need](../README.md#what-you-need). Sign in as an MFA-protected IAM identity, never the root user.
 
 ![REFERENCE ARCHITECTURE](images/ref-architecture-lab1.png)
 
@@ -384,4 +384,4 @@ Before moving to Lab 2, confirm:
 
 The landing zone is ready, but the private subnet has no way out yet. In Lab 2, FortiGate becomes that way out.
 
-*Next:* [**Lab 2: FortiGate VM Deployment & Traffic Steering**](/aws-101-lab2/README.md)
+*Next:* [**Lab 2: FortiGate VM Deployment & Traffic Steering**](../aws-101-lab2/README.md)
