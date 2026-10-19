@@ -1,0 +1,288 @@
+{
+  "Version": "2012-10-17",
+  "Statement": [
+    {
+      "Sid": "ConsoleReadOnlyInWorkshopRegion",
+      "Effect": "Allow",
+      "Action": [
+        "ec2:Describe*",
+        "ec2:GetSecurityGroupsForVpc",
+        "ec2:GetEbsEncryptionByDefault",
+        "ec2:GetEbsDefaultKmsKeyId",
+        "ec2:GetInstanceTypesFromInstanceRequirements",
+        "ec2:GetConsoleOutput",
+        "ec2:GetConsoleScreenshot",
+        "cloudwatch:GetMetricData",
+        "cloudwatch:ListMetrics",
+        "cloudwatch:DescribeAlarms",
+        "kms:ListAliases"
+      ],
+      "Resource": "*",
+      "Condition": {
+        "StringEquals": {
+          "aws:RequestedRegion": "ca-central-1"
+        }
+      }
+    },
+    {
+      "Sid": "GlobalReadOnlyHelpers",
+      "Effect": "Allow",
+      "Action": [
+        "iam:ListInstanceProfiles",
+        "sts:DecodeAuthorizationMessage"
+      ],
+      "Resource": "*"
+    },
+    {
+      "Sid": "LaunchWizardQuickStartAmiLookup",
+      "Effect": "Allow",
+      "Action": [
+        "ssm:GetParameter",
+        "ssm:GetParameters"
+      ],
+      "Resource": "arn:aws:ssm:ca-central-1::parameter/aws/service/*"
+    },
+    {
+      "Sid": "CreateVpcOnlyWithProjectTag",
+      "Effect": "Allow",
+      "Action": "ec2:CreateVpc",
+      "Resource": "arn:aws:ec2:ca-central-1:*:vpc/*",
+      "Condition": {
+        "StringEquals": {
+          "aws:RequestTag/Project": "Redwood-AWS-101"
+        }
+      }
+    },
+    {
+      "Sid": "CreateNetworkResourcesOnlyWithProjectTag",
+      "Effect": "Allow",
+      "Action": [
+        "ec2:CreateSubnet",
+        "ec2:CreateRouteTable",
+        "ec2:CreateInternetGateway",
+        "ec2:CreateKeyPair",
+        "ec2:AllocateAddress"
+      ],
+      "Resource": [
+        "arn:aws:ec2:ca-central-1:*:subnet/*",
+        "arn:aws:ec2:ca-central-1:*:route-table/*",
+        "arn:aws:ec2:ca-central-1:*:internet-gateway/*",
+        "arn:aws:ec2:ca-central-1:*:key-pair/*",
+        "arn:aws:ec2:ca-central-1:*:elastic-ip/*"
+      ],
+      "Condition": {
+        "StringEquals": {
+          "aws:RequestTag/Project": "Redwood-AWS-101"
+        }
+      }
+    },
+    {
+      "Sid": "CreatePort2InterfaceOnlyWithProjectTag",
+      "Effect": "Allow",
+      "Action": "ec2:CreateNetworkInterface",
+      "Resource": "arn:aws:ec2:ca-central-1:*:network-interface/*",
+      "Condition": {
+        "StringEquals": {
+          "aws:RequestTag/Project": "Redwood-AWS-101"
+        }
+      }
+    },
+    {
+      "Sid": "LaunchOnlyWorkshopInstanceTypesWithImdsV2AndProjectTag",
+      "Effect": "Allow",
+      "Action": "ec2:RunInstances",
+      "Resource": "arn:aws:ec2:ca-central-1:*:instance/*",
+      "Condition": {
+        "StringEquals": {
+          "aws:RequestTag/Project": "Redwood-AWS-101",
+          "ec2:InstanceType": [
+            "c5.large",
+            "t3.micro"
+          ],
+          "ec2:MetadataHttpTokens": "required"
+        }
+      }
+    },
+    {
+      "Sid": "LaunchCreatesTaggedVolumesAndInterfacesWithoutPublicIp",
+      "Effect": "Allow",
+      "Action": "ec2:RunInstances",
+      "Resource": [
+        "arn:aws:ec2:ca-central-1:*:volume/*",
+        "arn:aws:ec2:ca-central-1:*:network-interface/*"
+      ],
+      "Condition": {
+        "StringEquals": {
+          "aws:RequestTag/Project": "Redwood-AWS-101"
+        },
+        "BoolIfExists": {
+          "ec2:AssociatePublicIpAddress": "false"
+        }
+      }
+    },
+    {
+      "Sid": "LaunchFromAnyAmiAndUseLaunchWizardSecurityGroups",
+      "Effect": "Allow",
+      "Action": [
+        "ec2:RunInstances",
+        "ec2:CreateNetworkInterface",
+        "ec2:CreateSecurityGroup",
+        "ec2:AuthorizeSecurityGroupIngress",
+        "ec2:RevokeSecurityGroupIngress",
+        "ec2:ModifySecurityGroupRules",
+        "ec2:UpdateSecurityGroupRuleDescriptionsIngress",
+        "ec2:DeleteSecurityGroup"
+      ],
+      "Resource": [
+        "arn:aws:ec2:ca-central-1::image/*",
+        "arn:aws:ec2:ca-central-1:*:security-group/*",
+        "arn:aws:ec2:ca-central-1:*:security-group-rule/*"
+      ]
+    },
+    {
+      "Sid": "TagOnlyAsPartOfCreate",
+      "Effect": "Allow",
+      "Action": "ec2:CreateTags",
+      "Resource": "arn:aws:ec2:ca-central-1:*:*/*",
+      "Condition": {
+        "StringEquals": {
+          "ec2:CreateAction": [
+            "CreateVpc",
+            "CreateSubnet",
+            "CreateRouteTable",
+            "CreateInternetGateway",
+            "CreateKeyPair",
+            "AllocateAddress",
+            "CreateNetworkInterface",
+            "CreateSecurityGroup",
+            "RunInstances"
+          ]
+        }
+      }
+    },
+    {
+      "Sid": "EditTagsOnProjectResourcesExceptProjectTag",
+      "Effect": "Allow",
+      "Action": [
+        "ec2:CreateTags",
+        "ec2:DeleteTags"
+      ],
+      "Resource": "arn:aws:ec2:ca-central-1:*:*/*",
+      "Condition": {
+        "StringEquals": {
+          "aws:ResourceTag/Project": "Redwood-AWS-101"
+        },
+        "ForAllValues:StringNotEquals": {
+          "aws:TagKeys": "Project"
+        }
+      }
+    },
+    {
+      "Sid": "UseAndDeleteOnlyProjectTaggedResources",
+      "Effect": "Allow",
+      "Action": [
+        "ec2:CreateSubnet",
+        "ec2:CreateRouteTable",
+        "ec2:CreateSecurityGroup",
+        "ec2:CreateNetworkInterface",
+        "ec2:RunInstances",
+        "ec2:AttachInternetGateway",
+        "ec2:DetachInternetGateway",
+        "ec2:CreateRoute",
+        "ec2:ReplaceRoute",
+        "ec2:DeleteRoute",
+        "ec2:AssociateRouteTable",
+        "ec2:DisassociateRouteTable",
+        "ec2:AssociateAddress",
+        "ec2:DisassociateAddress",
+        "ec2:ReleaseAddress",
+        "ec2:AttachNetworkInterface",
+        "ec2:DetachNetworkInterface",
+        "ec2:ModifyNetworkInterfaceAttribute",
+        "ec2:StartInstances",
+        "ec2:StopInstances",
+        "ec2:RebootInstances",
+        "ec2:TerminateInstances",
+        "ec2:DeleteNetworkInterface",
+        "ec2:DeleteVolume",
+        "ec2:DeleteKeyPair",
+        "ec2:DeleteSubnet",
+        "ec2:DeleteRouteTable",
+        "ec2:DeleteInternetGateway",
+        "ec2:DeleteVpc"
+      ],
+      "Resource": "arn:aws:ec2:ca-central-1:*:*/*",
+      "Condition": {
+        "StringEquals": {
+          "aws:ResourceTag/Project": "Redwood-AWS-101"
+        }
+      }
+    },
+    {
+      "Sid": "EncryptEbsVolumesThroughEc2Only",
+      "Effect": "Allow",
+      "Action": [
+        "kms:DescribeKey",
+        "kms:Decrypt",
+        "kms:GenerateDataKeyWithoutPlaintext",
+        "kms:ReEncrypt*",
+        "kms:CreateGrant"
+      ],
+      "Resource": "*",
+      "Condition": {
+        "StringEquals": {
+          "kms:ViaService": "ec2.ca-central-1.amazonaws.com"
+        }
+      }
+    },
+    {
+      "Sid": "MarketplaceSubscriptionsReadOnly",
+      "Effect": "Allow",
+      "Action": [
+        "aws-marketplace:ViewSubscriptions",
+        "aws-marketplace:SearchAgreements",
+        "aws-marketplace:DescribeAgreement",
+        "aws-marketplace:GetAgreementTerms"
+      ],
+      "Resource": "*"
+    },
+    {
+      "Sid": "SubscribeOnlyToFortiGateByol",
+      "Effect": "Allow",
+      "Action": "aws-marketplace:Subscribe",
+      "Resource": "*",
+      "Condition": {
+        "ForAnyValue:StringEquals": {
+          "aws-marketplace:ProductId": "e5936f4a-0d69-479f-919c-d5e158bd4d12"
+        }
+      }
+    },
+    {
+      "Sid": "ManageWorkshopResourceGroup",
+      "Effect": "Allow",
+      "Action": [
+        "resource-groups:CreateGroup",
+        "resource-groups:Tag",
+        "resource-groups:DeleteGroup",
+        "resource-groups:GetGroup",
+        "resource-groups:GetGroupQuery",
+        "resource-groups:GetGroupConfiguration",
+        "resource-groups:ListGroupResources",
+        "resource-groups:GetTags"
+      ],
+      "Resource": "arn:aws:resource-groups:ca-central-1:*:group/redwood-aws101-lab-rg"
+    },
+    {
+      "Sid": "ResourceGroupsAndTagEditorReadOnly",
+      "Effect": "Allow",
+      "Action": [
+        "resource-groups:ListGroups",
+        "resource-groups:SearchResources",
+        "tag:GetResources",
+        "tag:GetTagKeys",
+        "tag:GetTagValues"
+      ],
+      "Resource": "*"
+    }
+  ]
+}
