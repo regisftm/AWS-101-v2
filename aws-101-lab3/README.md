@@ -334,7 +334,7 @@ Keep this SSH session open for the next steps.
 
 ## Step 7: Create the Outbound Policy (port2 → port1)
 
-The application server needs Internet access for software updates, DNS, and API calls, but only through FortiGate. The folllowing policy allows traffic from the private side (`port2`) to the Internet (`port1`). It also enables **source NAT**, which is mandatory on AWS. The Internet Gateway only translates addresses that have a public IP associated with them. `port1`'s address has the Elastic IP, and the VM's `10.100.2.10` has none. FortiGate must therefore replace the VM's address with `port1`'s address before the packet leaves.
+The application server needs Internet access for software updates, DNS, and API calls, but only through FortiGate. The following policy allows traffic from the private side (`port2`) to the Internet (`port1`). It also enables **source NAT**, which is mandatory on AWS. The Internet Gateway only translates addresses that have a public IP associated with them. `port1`'s address has the Elastic IP, and the VM's `10.100.2.10` has none. FortiGate must therefore replace the VM's address with `port1`'s address before the packet leaves.
 
 1. **Create the policy:**
    - Go to **Policy & Objects → Firewall Policy**.
