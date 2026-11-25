@@ -29,10 +29,10 @@ FortiGate-VM is sold through AWS Marketplace. Before your account can launch it,
 
 2. **Find the FortiGate listing:**
    - In the left navigation pane, choose **Discover products**.
-   - In the search box, type `Fortinet FortiGate Next-Generation Firewall` and press **Enter**.
+   - In the search box, type `Fortinet FortiGate (BYOL) Next-Generation Firewall ` and press **Enter**.
 
 3. **Select the BYOL listing:**
-   - Choose the listing published by **Fortinet, Inc.** that does **not** have "(PAYG)" in its title. That is the BYOL listing.
+   - Choose the listing published by **Fortinet, Inc.**. That is the BYOL listing.
    - If the listing offers more than one architecture, use **x86_64**. It matches the `c5.large` instance type you launch in Step 3.
 
    ![RIGHT PRODUCT](images/step1.3.png)

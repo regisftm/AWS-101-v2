@@ -119,14 +119,14 @@ A Virtual Private Cloud (VPC) is Redwood's own isolated network inside AWS, the 
 > Choose **VPC only**, not **VPC and more**. The "VPC and more" option creates subnets, route tables, and gateways automatically. You'll build each of them yourself in the next steps, so you understand exactly what each one does.
 
 4. **Add the tag and create the VPC:**
-   - Under **Tags**, the `Name` tag is already filled in. Choose **Add new tag** and enter:
+   - Under **Tags**, the `Name` tag is already filled in. Choose **Add tag** and enter:
 
      | **Tags** | |
      | --- | --- |
      | Key | `Project` |
      | Value - *optional* | `Redwood-AWS-101` |
 
-   - Choose **Create VPC**.
+   - Click on **Create VPC**.
 
    ![VPC TAG + CREATE](images/step2.4.png)
 
