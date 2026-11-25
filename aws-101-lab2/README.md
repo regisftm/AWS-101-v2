@@ -49,7 +49,7 @@ FortiGate-VM is sold through AWS Marketplace. Before your account can launch it,
 
    - [x] In **AWS Marketplace → Manage subscriptions**, the FortiGate listing appears under **Active subscriptions**.
 
-   ![VALIDATION](images/step1.check.png)
+   ![VALIDATION](images/step1-check.png)
 
 ---
 
