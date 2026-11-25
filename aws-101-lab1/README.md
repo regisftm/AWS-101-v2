@@ -32,7 +32,7 @@ Real deployments usually add more tags, such as `Environment` and `Owner`, for c
 
 ## Step 1: Create an AWS Resource Group (Optional)
 
-**Why:** AWS spreads resources across many consoles: VPC, EC2, Elastic IPs, and so on. A tag-based Resource Group shows every resource tagged `Project` = `Redwood-AWS-101` on one page. That makes it easy to see what you've built, and to make sure nothing is forgotten at clean-up. This step is optional, but recommended.
+AWS spreads resources across many consoles: VPC, EC2, Elastic IPs, and so on. A tag-based Resource Group shows every resource tagged `Project` = `Redwood-AWS-101` on one page. That makes it easy to see what you've built, and to make sure nothing is forgotten at clean-up. This step is optional, but recommended.
 
 > [!NOTE]
 > Do not block pop-ups for the AWS Management Console. Some console wizards open in new windows.
