@@ -33,13 +33,13 @@ By the end of the workshop, you will have built the following:
 
 Complete the labs in order. Each one builds on the previous lab.
 
-| Lab | Stage | Time |
-| --- | --- | --- |
-| 1. [AWS Infrastructure Foundation](aws-101-lab1/README.md) | Build the AWS landing zone network | ~25 min |
-| 2. [FortiGate VM Deployment & Traffic Steering](aws-101-lab2/README.md) | Make FortiGate the only way in and out | ~60 min |
-| 3. [Security Policies & Traffic Testing](aws-101-lab3/README.md) | Launch the first application server, then prove it is reachable and inspected | ~40 min |
-| 4. [Site-to-Site VPN Configuration](aws-101-lab4/README.md) | Connect AWS to HQ | ~30 min |
-| [Clean-Up](aws-101-lab4/README.md#clean-up) | Delete every resource so nothing keeps billing | ~10 min |
+| Lab | Stage |
+| --- | --- | 
+| 1. [AWS Infrastructure Foundation](aws-101-lab1/README.md) | Build the AWS landing zone network |
+| 2. [FortiGate VM Deployment & Traffic Steering](aws-101-lab2/README.md) | Make FortiGate the only way in and out | 
+| 3. [Security Policies & Traffic Testing](aws-101-lab3/README.md) | Launch the first application server, then prove it is reachable and inspected |
+| 4. [Site-to-Site VPN Configuration](aws-101-lab4/README.md) | Connect AWS to HQ |
+| [Clean-Up](aws-101-lab4/README.md#clean-up) | Delete every resource so nothing keeps billing |
 
 ## What You Need
 
